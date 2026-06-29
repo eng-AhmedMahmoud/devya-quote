@@ -357,8 +357,13 @@ export function QuoteDocumentPreview({ state, lang, clientName, date }: Props) {
             <div style={{ color: '#a1a1aa', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 12 }}>
               {d.eyebrow}
             </div>
-            <h1>{d.h1}</h1>
-            <p className="cover-sub" style={{ fontFamily: isAr ? "'Amiri', serif" : 'inherit' }}>
+            <h1 style={{ fontFamily: isAr ? "'Amiri', var(--font-amiri), serif" : 'inherit' }}>
+              {d.h1}
+            </h1>
+            <p
+              className="cover-sub"
+              style={{ fontFamily: isAr ? "'Amiri', var(--font-amiri), serif" : 'inherit' }}
+            >
               {d.sub}
             </p>
 

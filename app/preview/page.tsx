@@ -39,8 +39,14 @@ function PreviewInner() {
 
   useEffect(() => {
     if (!auto) return;
-    const t = setTimeout(() => window.print(), 400);
-    return () => clearTimeout(t);
+    // Wait for fonts + layout to settle before opening print dialog.
+    const ready = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready;
+    const trigger = () => setTimeout(() => window.print(), 600);
+    if (ready && typeof (ready as Promise<unknown>).then === 'function') {
+      (ready as Promise<unknown>).then(trigger);
+    } else {
+      trigger();
+    }
   }, [auto]);
 
   return (

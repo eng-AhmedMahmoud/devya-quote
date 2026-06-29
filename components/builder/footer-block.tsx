@@ -39,23 +39,12 @@ export function FooterBlock({ lang }: Props) {
               {t.links.booking}
             </a>
             <a
-              href="https://devya.dev#work"
+              href="https://portfolio.devya-solutions.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-white transition"
             >
               {t.links.portfolio}
-            </a>
-            <a
-              href="https://contracts.devya-solutions.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white transition"
-            >
-              {t.links.contracts}
-            </a>
-            <a href="#" className="hover:text-white transition">
-              {t.links.quote}
             </a>
           </nav>
         </div>

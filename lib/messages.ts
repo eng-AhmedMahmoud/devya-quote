@@ -203,7 +203,7 @@ const ar: MessagesShape = {
     links: {
       devya: 'devya.dev',
       booking: 'احجز اجتماع',
-      portfolio: 'الأعمال',
+      portfolio: 'أعمالنا',
       contracts: 'العقود',
       quote: 'عرض السعر',
     },
@@ -340,7 +340,7 @@ const en: MessagesShape = {
     links: {
       devya: 'devya.dev',
       booking: 'Book a meeting',
-      portfolio: 'Work',
+      portfolio: 'Our Work',
       contracts: 'Contracts',
       quote: 'Quote',
     },
