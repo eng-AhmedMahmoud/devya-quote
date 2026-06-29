@@ -1,10 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Printer, ExternalLink } from 'lucide-react';
+import { Printer, ExternalLink, FileDown } from 'lucide-react';
 import type { Lang } from '@/lib/messages';
 import { MESSAGES } from '@/lib/messages';
 import { calc, fmt, type QuoteState } from '@/lib/pricing';
+
+function encodeState(state: QuoteState): string {
+  if (typeof window === 'undefined') return '';
+  return btoa(JSON.stringify(state));
+}
 
 interface Props {
   state: QuoteState;
@@ -60,7 +65,16 @@ export function InvoicePanel({ state, lang }: Props) {
 
   const any = state.designs > 0 || state.videos > 0 || state.content || state.adsOn;
 
-  async function handleSave() {
+  function handlePrintPreview() {
+    const qs = new URLSearchParams({
+      lang,
+      s: encodeState(state),
+      auto: '1',
+    });
+    window.open(`/preview?${qs.toString()}`, '_blank', 'noopener');
+  }
+
+  async function handleDownloadDocx() {
     setSaving(true);
     try {
       const res = await fetch('/api/export-docx', {
@@ -73,7 +87,6 @@ export function InvoicePanel({ state, lang }: Props) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      // Try to read Content-Disposition for filename
       const cd = res.headers.get('content-disposition') || '';
       const m = cd.match(/filename="?([^"]+)"?/i);
       a.download = m?.[1] || `devya-quote-${lang}.docx`;
@@ -81,9 +94,8 @@ export function InvoicePanel({ state, lang }: Props) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e) {
-      // Fallback to print if API not wired yet
-      window.print();
+    } catch {
+      handlePrintPreview();
     } finally {
       setSaving(false);
     }
@@ -149,12 +161,21 @@ export function InvoicePanel({ state, lang }: Props) {
       <div className="flex gap-2 mt-5 flex-wrap">
         <button
           type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex-1 inline-flex items-center justify-center gap-2 font-medium text-sm text-zinc-950 bg-white rounded-full px-4 py-3 transition hover:bg-zinc-200 disabled:opacity-60 whitespace-nowrap"
+          onClick={handlePrintPreview}
+          className="flex-1 inline-flex items-center justify-center gap-2 font-medium text-sm text-zinc-950 bg-white rounded-full px-4 py-3 transition hover:bg-zinc-200 whitespace-nowrap"
         >
           <Printer className="h-4 w-4" />
           {t.save}
+        </button>
+        <button
+          type="button"
+          onClick={handleDownloadDocx}
+          disabled={saving}
+          className="inline-flex items-center justify-center gap-2 font-medium text-sm text-white bg-transparent border border-white/10 rounded-full px-4 py-3 transition hover:bg-white/5 hover:border-white disabled:opacity-60 whitespace-nowrap"
+          aria-label={lang === 'ar' ? 'تحميل Word' : 'Download Word'}
+          title={lang === 'ar' ? 'تحميل ‎.docx' : 'Download .docx'}
+        >
+          <FileDown className="h-4 w-4" />
         </button>
         <a
           href={BOOKING_URL}
