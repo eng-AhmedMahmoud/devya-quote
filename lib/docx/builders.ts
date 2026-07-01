@@ -232,7 +232,6 @@ export function makeFooterStrip(isAr: boolean): Footer {
 
 export function makeCover(
   isAr: boolean,
-  clientName: string,
   today: string,
 ): Paragraph[] {
   const align = alignFor(isAr);
@@ -286,40 +285,10 @@ export function makeCover(
     ],
   });
 
-  const presentedLabel = new Paragraph({
-    alignment: align,
-    bidirectional: isAr,
-    spacing: { before: 160, after: 40 },
-    children: [
-      new TextRun({
-        font,
-        size: 14,
-        color: COLORS.zinc500,
-        text: (isAr ? 'مقدم إلى' : 'Presented for').toUpperCase(),
-      }),
-    ],
-  });
-
-  const presentedValue = new Paragraph({
-    alignment: align,
-    bidirectional: isAr,
-    spacing: { before: 0, after: 200 },
-    children: [
-      new TextRun({
-        font,
-        bold: true,
-        size: 36,
-        color: COLORS.ink,
-        rightToLeft: isAr,
-        text: clientName || (isAr ? '«اسم العميل»' : '«Client name»'),
-      }),
-    ],
-  });
-
   const dateLine = new Paragraph({
     alignment: align,
     bidirectional: isAr,
-    spacing: { before: 0, after: 240 },
+    spacing: { before: 160, after: 240 },
     border: {
       bottom: { style: BorderStyle.SINGLE, size: 6, color: COLORS.divider },
     },
@@ -334,7 +303,7 @@ export function makeCover(
     ],
   });
 
-  return [kicker, title, sub, presentedLabel, presentedValue, dateLine];
+  return [kicker, title, sub, dateLine];
 }
 
 /* ----------------------------------------------------------------- */

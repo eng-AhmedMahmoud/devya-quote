@@ -28,7 +28,6 @@ function decode(s: string | null): Partial<QuoteState> | null {
 function PreviewInner() {
   const params = useSearchParams();
   const lang = (params.get('lang') === 'en' ? 'en' : 'ar') as Lang;
-  const clientName = params.get('client') || undefined;
   const auto = params.get('auto') === '1';
   const stateOverride = decode(params.get('s'));
 
@@ -55,7 +54,7 @@ function PreviewInner() {
       lang={lang}
       className={lang === 'ar' ? 'font-amiri' : 'font-sora'}
     >
-      <QuoteDocumentPreview state={state} lang={lang} clientName={clientName} />
+      <QuoteDocumentPreview state={state} lang={lang} />
     </div>
   );
 }

@@ -11,8 +11,6 @@ const dict = {
     eyebrow: 'Quote · Proposal',
     h1: 'Monthly Quote',
     sub: 'Transparent, itemised pricing. You pay for the actual deliverables — design, video, content, ads — then a single 20% management layer covers strategy, brand, media buying and consulting.',
-    presentedFor: 'Presented for',
-    clientPlaceholder: '«Client Name»',
     email: 'Email',
     phone: 'Phone',
     website: 'Web',
@@ -71,8 +69,6 @@ const dict = {
     eyebrow: 'عرض سعر · مقترح',
     h1: 'عرض السعر الشهري',
     sub: 'تسعير شفّاف ومبوّب: بتدفع مقابل الشغل الفعلي — تصميم وفيديو ومحتوى وإعلانات — وبعدين طبقة إدارة واحدة 20% بتغطّي الاستراتيجية والعلامة والميديا باينج والاستشارات.',
-    presentedFor: 'مقدم إلى',
-    clientPlaceholder: '«اسم العميل»',
     email: 'البريد الإلكتروني',
     phone: 'الهاتف',
     website: 'الموقع',
@@ -131,7 +127,6 @@ const dict = {
 interface Props {
   state: QuoteState;
   lang: Lang;
-  clientName?: string;
   date?: string; // YYYY-MM-DD
 }
 
@@ -152,7 +147,7 @@ function formatDateLocal(iso: string, lang: Lang): string {
   }).format(date);
 }
 
-export function QuoteDocumentPreview({ state, lang, clientName, date }: Props) {
+export function QuoteDocumentPreview({ state, lang, date }: Props) {
   const isAr = lang === 'ar';
   const d = dict[lang];
   const c = calc(state);
@@ -367,10 +362,6 @@ export function QuoteDocumentPreview({ state, lang, clientName, date }: Props) {
               {d.sub}
             </p>
 
-            <div className="cover-presented">
-              <span className="label">{d.presentedFor}</span>
-              <span className="value">{clientName || d.clientPlaceholder}</span>
-            </div>
           </div>
 
           <div className="doc-cover-bot">
@@ -419,7 +410,7 @@ export function QuoteDocumentPreview({ state, lang, clientName, date }: Props) {
             </div>
 
             <div className="doc-footer-strip">
-              <span>{clientName || dash} · {niceDate}</span>
+              <span>{niceDate}</span>
               <span>{d.page} {num} {d.of} {String(totalPages).padStart(2, '0')}</span>
             </div>
           </div>

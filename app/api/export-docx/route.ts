@@ -163,7 +163,7 @@ export async function POST(req: Request) {
         headers: { default: makeHeaderStrip(isAr) },
         footers: { default: makeFooterStrip(isAr) },
         children: [
-          ...makeCover(isAr, headlineName, today),
+          ...makeCover(isAr, today),
           ...makeParty(isAr),
           servicesHeading,
           makeServicesTable(isAr, state, c),
