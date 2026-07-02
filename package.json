@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "portless quote next dev",
-    "dev:raw": "next dev -p 3046",
+    "dev:raw": "next dev",
     "build": "next build",
     "start": "portless quote next start",
     "lint": "next lint"
