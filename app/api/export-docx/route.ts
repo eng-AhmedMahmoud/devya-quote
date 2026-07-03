@@ -17,6 +17,7 @@ import {
   makeTotalsBlock,
 } from '@/lib/docx/builders';
 import { calc, type QuoteState } from '@/lib/pricing';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -103,6 +104,17 @@ function todayDisplay(lang: Lang): string {
 /* ----------------------------------------------------------------- */
 
 export async function POST(req: Request) {
+  // Per-IP rate limit before any parsing or docx work — this route is
+  // unauthenticated and DOCX generation is CPU-heavy (DoS surface, S24).
+  // Middleware skips /api/* in this app, so the handler must enforce it.
+  const rate = checkRateLimit(getClientIp(req));
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } },
+    );
+  }
+
   let raw: unknown;
   try {
     raw = await req.json();
