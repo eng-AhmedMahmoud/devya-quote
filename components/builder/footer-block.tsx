@@ -31,7 +31,7 @@ export function FooterBlock({ lang }: Props) {
               {t.links.devya}
             </a>
             <a
-              href="https://booking.devya-solutions.com"
+              href="https://booking.devya.dev"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-white transition"
@@ -39,7 +39,7 @@ export function FooterBlock({ lang }: Props) {
               {t.links.booking}
             </a>
             <a
-              href="https://portfolio.devya-solutions.com/"
+              href="https://portfolio.devya.dev/"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-white transition"

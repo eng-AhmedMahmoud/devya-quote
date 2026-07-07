@@ -17,7 +17,7 @@ interface Props {
   defaultAdBudget: number;
 }
 
-const BOOKING_URL = process.env.NEXT_PUBLIC_BOOKING_URL || 'https://booking.devya-solutions.com';
+const BOOKING_URL = process.env.NEXT_PUBLIC_BOOKING_URL || 'https://booking.devya.dev';
 
 function Row({
   name,

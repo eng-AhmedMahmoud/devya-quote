@@ -191,7 +191,7 @@ export function makeHeaderStrip(isAr: boolean): Header {
 
 export function makeFooterStrip(isAr: boolean): Footer {
   const line1 = `contact@devya.dev  ·  devya.dev`;
-  const line2 = `booking.devya-solutions.com  ·  portfolio.devya-solutions.com  ·  quote.devya-solutions.com`;
+  const line2 = `booking.devya.dev  ·  portfolio.devya.dev  ·  quote.devya.dev`;
 
   return new Footer({
     children: [

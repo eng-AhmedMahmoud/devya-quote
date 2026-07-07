@@ -2,8 +2,17 @@ import { sora, amiri } from './fonts';
 import '../styles/globals.css';
 
 export const metadata = {
+  metadataBase: new URL('https://quote.devya.dev'),
   title: 'Devya · Quote / عرض سعر',
   description: 'Interactive quote builder — pick your services and see the monthly invoice live.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Devya · Quote / عرض سعر',
+    description: 'Interactive quote builder — pick your services and see the monthly invoice live.',
+    url: 'https://quote.devya.dev/',
+    siteName: 'Devya Solutions',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
