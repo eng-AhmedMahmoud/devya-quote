@@ -54,6 +54,14 @@ export function FooterBlock({ lang }: Props) {
             >
               Instagram
             </a>
+            <a
+              href="https://x.com/devya_solutions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition"
+            >
+              X
+            </a>
           </nav>
         </div>
         <div className="mt-5 pt-4 border-t border-white/5 text-xs text-zinc-500 font-mono flex flex-wrap gap-3 justify-between">
