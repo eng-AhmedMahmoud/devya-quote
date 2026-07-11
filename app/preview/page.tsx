@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { QuoteDocumentPreview } from '@/components/preview/quote-document-preview';
 import type { Lang } from '@/lib/messages';
 import type { QuoteState } from '@/lib/pricing';
+import { useUsdEgp } from '@/lib/use-fx';
 
 const DEFAULT_STATE: QuoteState = {
   designs: 20,
@@ -13,6 +14,7 @@ const DEFAULT_STATE: QuoteState = {
   adsOn: true,
   adBudget: 30000,
   web: false,
+  webTier: null,
 };
 
 function decode(s: string | null): Partial<QuoteState> | null {
@@ -36,8 +38,13 @@ function PreviewInner() {
     [stateOverride],
   );
 
+  const fx = useUsdEgp();
+  // Only web-project pricing depends on the live rate — don't hold up the
+  // print dialog for it unless a tier is actually shown on the document.
+  const fxReady = fx.settled || !(state.web && state.webTier);
+
   useEffect(() => {
-    if (!auto) return;
+    if (!auto || !fxReady) return;
     // Wait for fonts + layout to settle before opening print dialog.
     const ready = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready;
     const trigger = () => setTimeout(() => window.print(), 600);
@@ -46,7 +53,7 @@ function PreviewInner() {
     } else {
       trigger();
     }
-  }, [auto]);
+  }, [auto, fxReady]);
 
   return (
     <div
@@ -54,7 +61,7 @@ function PreviewInner() {
       lang={lang}
       className={lang === 'ar' ? 'font-amiri' : 'font-sora'}
     >
-      <QuoteDocumentPreview state={state} lang={lang} />
+      <QuoteDocumentPreview state={state} lang={lang} fxRate={fx.rate} />
     </div>
   );
 }

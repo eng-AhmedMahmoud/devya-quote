@@ -3,7 +3,15 @@
 import { DEVYA_PARTY } from '@/lib/devya-party';
 import { DevyaMark } from '@/components/ui/devya-logo';
 import { MESSAGES, type Lang } from '@/lib/messages';
-import { calc, fmt, type QuoteState } from '@/lib/pricing';
+import {
+  FALLBACK_USD_EGP,
+  calc,
+  fmt,
+  getWebTier,
+  tierEgpLabel,
+  tierUsdLabel,
+  type QuoteState,
+} from '@/lib/pricing';
 
 const dict = {
   en: {
@@ -128,6 +136,8 @@ interface Props {
   state: QuoteState;
   lang: Lang;
   date?: string; // YYYY-MM-DD
+  /** Daily USD→EGP rate for web-project tiers (from /api/fx) */
+  fxRate?: number;
 }
 
 function todayLocal(): string {
@@ -147,10 +157,13 @@ function formatDateLocal(iso: string, lang: Lang): string {
   }).format(date);
 }
 
-export function QuoteDocumentPreview({ state, lang, date }: Props) {
+export function QuoteDocumentPreview({ state, lang, date, fxRate }: Props) {
   const isAr = lang === 'ar';
   const d = dict[lang];
   const c = calc(state);
+  const rate = fxRate && fxRate > 0 ? fxRate : FALLBACK_USD_EGP;
+  const webTier = state.web ? getWebTier(state.webTier) : null;
+  const w = MESSAGES[lang].services.web;
   const today = date || todayLocal();
   const niceDate = formatDateLocal(today, lang);
   const year = today.slice(0, 4);
@@ -227,11 +240,11 @@ export function QuoteDocumentPreview({ state, lang, date }: Props) {
               <Row
                 isAr={isAr}
                 zebra={4}
-                name={d.web}
-                note={d.webNote}
+                name={webTier ? `${d.web} — ${w.tiers[webTier.id].name}` : d.web}
+                note={webTier ? `${w.tiers[webTier.id].desc} ${MESSAGES[lang].invoice.webProjectNote}` : d.webNote}
                 qty={dash}
-                unitVal={dash}
-                lineVal={dash}
+                unitVal={webTier ? `${w.approx} ${tierEgpLabel(webTier, rate, w.from, currency)}` : dash}
+                lineVal={webTier ? tierUsdLabel(webTier, w.from) : dash}
               />
             )}
           </tbody>

@@ -28,7 +28,16 @@ import {
 
 import { COLORS, FONT_AR, FONT_LATIN } from './colors';
 import { DEVYA_PARTY } from '@/lib/devya-party';
-import { calc, PRICE, type QuoteState } from '@/lib/pricing';
+import { MESSAGES } from '@/lib/messages';
+import {
+  FALLBACK_USD_EGP,
+  calc,
+  getWebTier,
+  PRICE,
+  tierEgpLabel,
+  tierUsdLabel,
+  type QuoteState,
+} from '@/lib/pricing';
 
 /* ----------------------------------------------------------------- */
 /* Small util helpers                                                 */
@@ -470,6 +479,7 @@ export function makeServicesTable(
   isAr: boolean,
   state: QuoteState,
   c: ReturnType<typeof calc>,
+  fxRate: number = FALLBACK_USD_EGP,
 ): Table {
   const lbl = isAr
     ? {
@@ -487,6 +497,8 @@ export function makeServicesTable(
         webHeading: 'تطوير الويب',
         webNote:
           'حسب الطلب — يتم تسعيرها بشكل منفصل بعد جلسة استكشاف. غير مدرجة في الإجمالي.',
+        webNoteTier:
+          'مشروع مستقل — يُدفع على دفعات منفصلة عن الاشتراك الشهري. غير مدرج في الإجمالي أدناه.',
         egp: 'جنيه',
       }
     : {
@@ -504,6 +516,8 @@ export function makeServicesTable(
         webHeading: 'Web development',
         webNote:
           'On demand — priced separately after a discovery call. Not included in totals below.',
+        webNoteTier:
+          'One-off project — paid in milestones, separate from the monthly retainer. Not included in totals below.',
         egp: 'EGP',
       };
 
@@ -587,30 +601,40 @@ export function makeServicesTable(
     );
   });
 
-  // Web add-on — always quoted as a note line ("on demand"), never priced.
-  // We render it as a single full-width cell that spans all four columns by
-  // re-using the table grid: label cell gets the heading + note, the three
-  // numeric cells get an em-dash placeholder so the row stays visually clean.
+  // Web add-on — a one-off project outside the monthly totals. With a tier
+  // selected it carries a USD band plus the day's EGP equivalent; without one
+  // it stays the classic "on demand" note line.
   if (state.web) {
     const zebra = rows.length % 2 === 1 ? 'F4F4F5' : 'FFFFFF';
+    const tier = getWebTier(state.webTier);
+    const tierCopy = tier ? MESSAGES[isAr ? 'ar' : 'en'].services.web.tiers[tier.id] : null;
+    const fromWord = isAr ? 'من' : 'from';
+    const heading = tierCopy ? `${lbl.webHeading} — ${tierCopy.name}` : lbl.webHeading;
+    const note = tierCopy ? `${tierCopy.desc} ${lbl.webNoteTier}` : lbl.webNote;
+    const unitText = tier ? `≈ ${tierEgpLabel(tier, fxRate, fromWord, lbl.egp)}` : '—';
+    const lineText = tier ? tierUsdLabel(tier, fromWord) : '—';
     tableRows.push(
       new TableRow({
         children: [
           bodyCell(
             [
-              textP(isAr, lbl.webHeading, {
+              textP(isAr, heading, {
                 bold: true,
                 size: 22,
                 color: COLORS.ink,
               }),
-              textP(isAr, lbl.webNote, { size: 16, color: COLORS.zinc600 }),
+              textP(isAr, note, { size: 16, color: COLORS.zinc600 }),
             ],
             46,
             zebra,
           ),
           bodyCell([textP(isAr, '—', { size: 20, color: COLORS.zinc500 })], 12, zebra),
-          bodyCell([textP(isAr, '—', { size: 18, color: COLORS.zinc500 })], 21, zebra),
-          bodyCell([textP(isAr, '—', { size: 18, color: COLORS.zinc500 })], 21, zebra),
+          bodyCell([textP(isAr, unitText, { size: 18, color: tier ? COLORS.zinc700 : COLORS.zinc500 })], 21, zebra),
+          bodyCell(
+            [textP(isAr, lineText, tier ? { bold: true, size: 22, color: COLORS.ink } : { size: 18, color: COLORS.zinc500 })],
+            21,
+            zebra,
+          ),
         ],
       }),
     );

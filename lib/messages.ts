@@ -1,5 +1,13 @@
+import type { WebTierId } from '@/lib/pricing';
+
 export type Lang = 'en' | 'ar';
 export type Bi<T = string> = Record<Lang, T>;
+
+export type WebTierCopy = {
+  name: string;
+  desc: string;
+  who: string;
+};
 
 export type PayRow = {
   wtag: string;
@@ -23,7 +31,20 @@ export type MessagesShape = {
     videos: { name: string; desc: string; hint: string; unit: string };
     content: { name: string; desc: string; toggle: string };
     ads: { name: string; desc: string; toggle: string; minHint: string; overMin: string };
-    web: { name: string; desc: string; toggle: string; onDemand: string };
+    web: {
+      name: string;
+      desc: string;
+      toggle: string;
+      onDemand: string;
+      chooseLabel: string;
+      notSure: string;
+      notSureDesc: string;
+      from: string;
+      approx: string;
+      tiers: Record<WebTierId, WebTierCopy>;
+      fxNote: (rate: string) => string;
+      fxNoteFallback: (rate: string) => string;
+    };
   };
   qtyUnit: { designs: string; videos: string };
   invoice: {
@@ -51,6 +72,8 @@ export type MessagesShape = {
     sectionEyebrow: string;
     aside: string;
     webOnDemand: string;
+    webProjectTitle: string;
+    webProjectNote: string;
   };
   payRows: {
     eyebrow: string;
@@ -110,9 +133,53 @@ const ar: MessagesShape = {
     },
     web: {
       name: 'مواقع وتطبيقات وأنظمة',
-      desc: 'بناء متاجر، تطوير مخصّص، ولوحات تحكّم — يُحدَّد النطاق معًا في اجتماع.',
-      toggle: 'أحتاج موقعًا / نظامًا (حسب الطلب — غير مشمول في الاشتراك الشهري)',
+      desc: 'اختر نوع المشروع لتظهر فئة السعر فورًا — بالدولار وما يعادله بالجنيه بسعر صرف اليوم.',
+      toggle: 'أحتاج موقعًا / نظامًا (مشروع مستقل — غير مشمول في الاشتراك الشهري)',
       onDemand: 'حسب الطلب',
+      chooseLabel: 'ما نوع المشروع؟',
+      notSure: 'لست متأكدًا بعد',
+      notSureDesc: 'نحدّد النوع والنطاق معًا في اجتماع قصير.',
+      from: 'من',
+      approx: '≈',
+      tiers: {
+        personal: {
+          name: 'موقع شخصي / تعريفي',
+          desc: 'صفحات قليلة (من نحن – خدماتنا – اتصل بنا) مع معرض صور أو صفحة أعمال بسيطة.',
+          who: 'أفراد · أطباء · محامون · شركات ناشئة',
+        },
+        blog: {
+          name: 'مدونة / موقع محتوى',
+          desc: 'مقالات وتصنيفات وصور/فيديو مع تفاعل بالتعليقات.',
+          who: 'كُتّاب · إعلاميون · مواقع إخبارية وتعليمية',
+        },
+        company: {
+          name: 'موقع شركة متوسط',
+          desc: 'صفحات خدمات مفصّلة، صفحة فريق، تواصل متقدّم، معرض أعمال، وتحسين SEO مبدئي.',
+          who: 'شركات صغيرة ومتوسطة · مكاتب استشارية',
+        },
+        storeBasic: {
+          name: 'متجر إلكتروني بسيط',
+          desc: 'عدد محدود من المنتجات، بوابة دفع، شحن بسيط، وإدارة طلبات.',
+          who: 'مشاريع صغيرة · ستارت أب تجارة إلكترونية',
+        },
+        storeMid: {
+          name: 'متجر إلكتروني متوسط',
+          desc: 'منتجات أكثر، تصنيفات، كوبونات، تقييمات، وتكامل مع شركات الشحن والدفع بأمان أفضل.',
+          who: 'شركات ناشئة تتوسّع في البيع أونلاين',
+        },
+        storeAdvanced: {
+          name: 'متجر متقدّم / موقع ضخم',
+          desc: 'آلاف المنتجات، اشتراكات وعضويات، لوحات تحكّم معقّدة، وتصميم مخصّص بالكامل مع تكاملات خارجية.',
+          who: 'شركات كبرى · منصات تجارة إلكترونية متكاملة',
+        },
+        customSystem: {
+          name: 'نظام مخصّص متقدّم',
+          desc: 'منصة أو نظام مبني من الصفر حسب احتياجك: تدفّقات عمل معقّدة، تكاملات، ولوحات تحكّم مخصّصة.',
+          who: 'مؤسسات · منتجات رقمية بمتطلبات خاصة',
+        },
+      },
+      fxNote: (rate) => `التحويل بسعر صرف اليوم: ١ دولار ≈ ${rate} ج.م — يُحدَّث يوميًا تلقائيًا.`,
+      fxNoteFallback: (rate) => `تحويل تقريبي: ١ دولار ≈ ${rate} ج.م — تعذّر جلب سعر اليوم، يُؤكَّد الرقم النهائي في العرض.`,
     },
   },
   qtyUnit: {
@@ -143,6 +210,8 @@ const ar: MessagesShape = {
     sectionEyebrow: '① اختر خدماتك وكمياتها',
     aside: '② الفاتورة الشهرية',
     webOnDemand: 'حسب الطلب',
+    webProjectTitle: 'مشروع لمرّة واحدة — تطوير الويب',
+    webProjectNote: 'يُسعَّر ويُدفع على دفعات منفصلة عن الاشتراك الشهري (مثلًا ٥٠٪ عند البدء / ٥٠٪ عند التسليم).',
   },
   payRows: {
     eyebrow: 'مواعيد الدفع',
@@ -247,9 +316,53 @@ const en: MessagesShape = {
     },
     web: {
       name: 'Websites, apps & systems',
-      desc: 'Storefronts, custom builds, and dashboards — scoped together on a call.',
-      toggle: 'I need a website / system (on-demand — not part of the monthly)',
+      desc: 'Pick a project type to see its price band instantly — in USD and today’s EGP equivalent.',
+      toggle: 'I need a website / system (one-off project — not part of the monthly)',
       onDemand: 'On demand',
+      chooseLabel: 'What kind of project?',
+      notSure: 'Not sure yet',
+      notSureDesc: 'We scope the type and features together on a short call.',
+      from: 'from',
+      approx: '≈',
+      tiers: {
+        personal: {
+          name: 'Personal / brochure site',
+          desc: 'A few pages (about — services — contact) with a photo gallery or simple portfolio.',
+          who: 'Individuals · doctors · lawyers · startups',
+        },
+        blog: {
+          name: 'Blog / content site',
+          desc: 'Articles, categories, images/video, and reader comments.',
+          who: 'Writers · media · news & education sites',
+        },
+        company: {
+          name: 'Business website',
+          desc: 'Detailed service pages, team page, advanced contact, portfolio, and starter SEO.',
+          who: 'SMEs · consulting firms',
+        },
+        storeBasic: {
+          name: 'Starter online store',
+          desc: 'A limited product range with a payment gateway, simple shipping, and order management.',
+          who: 'Small projects · e-commerce startups',
+        },
+        storeMid: {
+          name: 'Growing online store',
+          desc: 'Bigger catalogue, categories, coupons, reviews, shipping & payment integrations, tighter security.',
+          who: 'Startups scaling their online sales',
+        },
+        storeAdvanced: {
+          name: 'Advanced store / large site',
+          desc: 'Thousands of products, subscriptions, memberships, complex dashboards, fully custom design, external integrations.',
+          who: 'Large companies · full e-commerce platforms',
+        },
+        customSystem: {
+          name: 'Custom advanced system',
+          desc: 'A platform or system built from scratch around your needs: complex workflows, integrations, custom dashboards.',
+          who: 'Enterprises · digital products with special requirements',
+        },
+      },
+      fxNote: (rate) => `Converted at today’s rate: $1 ≈ ${rate} EGP — refreshed daily, automatically.`,
+      fxNoteFallback: (rate) => `Approximate conversion: $1 ≈ ${rate} EGP — live rate unavailable; final figure confirmed on the quote.`,
     },
   },
   qtyUnit: {
@@ -280,6 +393,8 @@ const en: MessagesShape = {
     sectionEyebrow: '① Pick services & volumes',
     aside: '② Monthly invoice',
     webOnDemand: 'On demand',
+    webProjectTitle: 'One-off project — web development',
+    webProjectNote: 'Priced and paid in milestones, separately from the monthly retainer (e.g. 50% kickoff / 50% on delivery).',
   },
   payRows: {
     eyebrow: 'Payment schedule',

@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { DevyaMark } from '@/components/ui/devya-logo';
 import { MESSAGES, type Lang } from '@/lib/messages';
-import { fmt, calc, type QuoteState } from '@/lib/pricing';
+import { fmt, calc, getWebTier, tierUsdLabel, type QuoteState } from '@/lib/pricing';
+import { useUsdEgp } from '@/lib/use-fx';
 import { LangToggle } from './lang-toggle';
 import { Stepper } from './stepper';
 import { Switch } from './switch';
@@ -14,6 +15,7 @@ import { InvoicePanel } from './invoice-panel';
 import { PaymentTerms } from './payment-terms';
 import { IntroSection } from './intro-section';
 import { FooterBlock } from './footer-block';
+import { WebTierPicker } from './web-tier-picker';
 
 export function QuoteBuilder() {
   const [lang, setLang] = useState<Lang>('ar');
@@ -24,10 +26,12 @@ export function QuoteBuilder() {
     adsOn: true,
     adBudget: 30000,
     web: false,
+    webTier: null,
   });
 
   const dict = useMemo(() => MESSAGES[lang], [lang]);
   const c = useMemo(() => calc(state), [state]);
+  const fx = useUsdEgp();
 
   const currency = lang === 'ar' ? 'ج.م' : 'EGP';
   const dash = '—';
@@ -45,7 +49,18 @@ export function QuoteBuilder() {
   const lineVideos = state.videos > 0 ? `${fmt(c.videos)} ${currency}` : zero;
   const lineContent = state.content ? `${fmt(c.content)} ${currency}` : zero;
   const lineAds = state.adsOn ? `${fmt(c.adEff)} ${currency}` : zero;
-  const lineWeb = state.web ? dict.services.web.onDemand : dash;
+  const webTier = getWebTier(state.webTier);
+  const lineWeb = state.web
+    ? webTier
+      ? tierUsdLabel(webTier, dict.services.web.from)
+      : dict.services.web.onDemand
+    : dash;
+  const fxRateLabel = fx.rate.toFixed(2);
+  const webHint = state.web
+    ? fx.live
+      ? dict.services.web.fxNote(fxRateLabel)
+      : dict.services.web.fxNoteFallback(fxRateLabel)
+    : undefined;
 
   // Dynamic hints
   const designsHint = state.designs > 30
@@ -190,12 +205,24 @@ export function QuoteBuilder() {
                 title={dict.services.web.name}
                 desc={dict.services.web.desc}
                 lineLabel={lineWeb}
+                hint={webHint}
               >
                 <Switch
                   checked={state.web}
                   onChange={(b) => patch('web', b)}
                   label={dict.services.web.toggle}
                 />
+                {state.web && (
+                  <div className="mt-4">
+                    <WebTierPicker
+                      value={state.webTier ?? null}
+                      onChange={(id) => patch('webTier', id)}
+                      lang={lang}
+                      dict={dict.services.web}
+                      rate={fx.rate}
+                    />
+                  </div>
+                )}
               </ServiceCard>
             </div>
 
@@ -204,7 +231,7 @@ export function QuoteBuilder() {
               <span className="block font-medium text-[13px] text-zinc-500 tracking-wide mb-4">
                 {dict.invoice.aside}
               </span>
-              <InvoicePanel state={state} lang={lang} defaultAdBudget={30000} />
+              <InvoicePanel state={state} lang={lang} defaultAdBudget={30000} fxRate={fx.rate} />
             </aside>
           </div>
         </section>

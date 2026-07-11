@@ -16,7 +16,8 @@ import {
   makeServicesTable,
   makeTotalsBlock,
 } from '@/lib/docx/builders';
-import { calc, type QuoteState } from '@/lib/pricing';
+import { getUsdEgpRate } from '@/lib/fx';
+import { calc, WEB_TIERS, type QuoteState } from '@/lib/pricing';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -34,15 +35,21 @@ interface Body {
 /* Body validation                                                    */
 /* ----------------------------------------------------------------- */
 
+const WEB_TIER_IDS = new Set<string>(WEB_TIERS.map((t) => t.id));
+
 function isQuoteState(v: unknown): v is QuoteState {
   if (!v || typeof v !== 'object') return false;
   const s = v as Record<string, unknown>;
-  const numericKeys = ['designs', 'videos', 'content'];
-  for (const k of numericKeys) {
+  for (const k of ['designs', 'videos', 'adBudget']) {
     if (typeof s[k] !== 'number' || !Number.isFinite(s[k] as number)) return false;
   }
-  if (typeof s.ads !== 'boolean') return false;
-  if (typeof s.web !== 'boolean') return false;
+  for (const k of ['content', 'adsOn', 'web']) {
+    if (typeof s[k] !== 'boolean') return false;
+  }
+  // Optional for backwards compatibility with links saved before web tiers existed.
+  if (s.webTier != null && !(typeof s.webTier === 'string' && WEB_TIER_IDS.has(s.webTier))) {
+    return false;
+  }
   return true;
 }
 
@@ -51,7 +58,7 @@ function validate(body: unknown): { ok: true; data: Required<Pick<Body, 'lang' |
   const b = body as Body;
   const lang: Lang = b.lang === 'ar' ? 'ar' : 'en';
   if (!isQuoteState(b.state)) {
-    return { ok: false, reason: 'state must include numeric designs/videos/content and boolean ads/web' };
+    return { ok: false, reason: 'state must include numeric designs/videos/adBudget, boolean content/adsOn/web, and an optional valid webTier' };
   }
   return {
     ok: true,
@@ -131,6 +138,10 @@ export async function POST(req: Request) {
 
   const c = calc(state);
 
+  // Daily USD→EGP rate for the web-project row; cached upstream, so this is
+  // effectively free on repeat exports.
+  const fx = await getUsdEgpRate();
+
   // Prefer the company name on the cover when both are provided — feels more
   // formal on a quote.  Fall back to person, then to a blank cover.
   const headlineName =
@@ -178,7 +189,7 @@ export async function POST(req: Request) {
           ...makeCover(isAr, today),
           ...makeParty(isAr),
           servicesHeading,
-          makeServicesTable(isAr, state, c),
+          makeServicesTable(isAr, state, c, fx.rate),
           totalsHeading,
           makeTotalsBlock(isAr, c),
           ...makePaymentTermsTable(isAr),
