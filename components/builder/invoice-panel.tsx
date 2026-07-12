@@ -6,9 +6,12 @@ import type { Lang } from '@/lib/messages';
 import { MESSAGES } from '@/lib/messages';
 import {
   DEFAULT_CURRENCY,
+  PRICE,
   calc,
   currencySymbol,
+  egpTo,
   fmt,
+  fmtFx,
   getWebTier,
   tierFxLabel,
   tierUsdLabel,
@@ -73,13 +76,16 @@ export function InvoicePanel({ state, lang, fxRates }: Props) {
   const t = MESSAGES[lang].invoice;
   const w = MESSAGES[lang].services.web;
   const [saving, setSaving] = useState(false);
-  const currency = lang === 'ar' ? 'ج.م' : 'EGP';
 
   const any = state.designs > 0 || state.videos > 0 || state.content || state.adsOn;
   const webTier = state.web ? getWebTier(state.webTier) : null;
   const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
   const fxRate = fxRates[displayCurrency];
   const fxSymbol = currencySymbol(displayCurrency, lang === 'ar');
+  const isEgp = displayCurrency === 'EGP';
+  // Retainer amounts are EGP-native; render them in the selected display currency
+  const money = (egp: number) => `${fmtFx(egpTo(egp, fxRates, displayCurrency))} ${fxSymbol}`;
+  const unitOf = (egp: number) => fmtFx(egpTo(egp, fxRates, displayCurrency));
 
   function handlePrintPreview() {
     const qs = new URLSearchParams({
@@ -132,36 +138,43 @@ export function InvoicePanel({ state, lang, fxRates }: Props) {
         {state.designs > 0 && (
           <Row
             name={t.rowDesigns}
-            sub={t.rowDesignsHint(state.designs, c.dUnit, state.designs > 30)}
-            val={`${fmt(c.designs)} ${currency}`}
+            sub={t.rowDesignsHint(state.designs, unitOf(c.dUnit), state.designs > 30)}
+            val={money(c.designs)}
           />
         )}
         {state.videos > 0 && (
           <Row
             name={t.rowVideos}
-            sub={t.rowVideosHint(state.videos)}
-            val={`${fmt(c.videos)} ${currency}`}
+            sub={t.rowVideosHint(state.videos, unitOf(PRICE.video))}
+            val={money(c.videos)}
           />
         )}
         {state.content && (
-          <Row name={t.rowContent} sub={t.contentFixedHint} val={`${fmt(c.content)} ${currency}`} />
+          <Row name={t.rowContent} sub={t.contentFixedHint} val={money(c.content)} />
         )}
         {state.adsOn && (
-          <Row name={t.rowAds} sub={t.adsPlatformHint} val={`${fmt(c.adEff)} ${currency}`} />
+          <Row name={t.rowAds} sub={t.adsPlatformHint} val={money(c.adEff)} />
         )}
 
         {any && (
           <>
-            <Row name={t.rowSubtotal} val={`${fmt(c.subtotal)} ${currency}`} variant="sub" />
-            <Row name={t.rowMgmt} sub={t.mgmtHint} val={`${fmt(c.mgmt)} ${currency}`} variant="mgmt" />
+            <Row name={t.rowSubtotal} val={money(c.subtotal)} variant="sub" />
+            <Row name={t.rowMgmt} sub={t.mgmtHint} val={money(c.mgmt)} variant="mgmt" />
           </>
         )}
       </div>
 
       <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t-2 border-white/10">
         <span className="font-sora font-bold text-[17px] text-white">{t.total}</span>
-        <span className="font-sora font-extrabold text-[32px] leading-none grad-text tabular-nums">
-          {any ? `${fmt(c.total)} ${currency}` : '0'}
+        <span className="text-end">
+          <span className="block font-sora font-extrabold text-[32px] leading-none grad-text tabular-nums">
+            {any ? money(c.total) : '0'}
+          </span>
+          {any && !isEgp && (
+            <span className="block font-mono text-[12px] text-zinc-500 mt-1.5 tabular-nums">
+              = {fmt(c.total)} {lang === 'ar' ? 'ج.م' : 'EGP'}
+            </span>
+          )}
         </span>
       </div>
 
@@ -190,6 +203,7 @@ export function InvoicePanel({ state, lang, fxRates }: Props) {
             <span className="text-zinc-200 font-semibold">{t.footnoteWeb}</span>
           </p>
         )}
+        {!isEgp && <p>{t.fxDisplayNote(fxSymbol)}</p>}
         <p>{t.footnoteEstim}</p>
       </div>
 

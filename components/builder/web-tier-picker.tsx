@@ -3,7 +3,6 @@
 import { Check } from 'lucide-react';
 import type { Lang, MessagesShape } from '@/lib/messages';
 import {
-  CURRENCIES,
   currencySymbol,
   WEB_TIERS,
   tierFxLabel,
@@ -16,54 +15,18 @@ interface Props {
   value: WebTierId | null;
   onChange: (id: WebTierId | null) => void;
   currency: CurrencyCode;
-  onCurrencyChange: (code: CurrencyCode) => void;
   lang: Lang;
   dict: MessagesShape['services']['web'];
   rates: Record<CurrencyCode, number>;
 }
 
-export function WebTierPicker({
-  value,
-  onChange,
-  currency,
-  onCurrencyChange,
-  lang,
-  dict,
-  rates,
-}: Props) {
+export function WebTierPicker({ value, onChange, currency, lang, dict, rates }: Props) {
   const isAr = lang === 'ar';
   const symbol = currencySymbol(currency, isAr);
   const rate = rates[currency];
 
   return (
     <div className="mt-1">
-      {/* Currency selector — converts every tier band instantly */}
-      <div className="flex items-center gap-2 flex-wrap mb-3.5">
-        <span className="text-[13px] text-zinc-500">{dict.currencyLabel}</span>
-        <div role="radiogroup" aria-label={dict.currencyLabel} className="flex gap-1.5 flex-wrap">
-          {CURRENCIES.map((c) => {
-            const active = c.code === currency;
-            return (
-              <button
-                key={c.code}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => onCurrencyChange(c.code)}
-                title={isAr ? c.ar : c.en}
-                className={`font-mono font-bold text-[13px] px-3 py-1.5 rounded-full border transition ${
-                  active
-                    ? 'bg-white text-zinc-950 border-white'
-                    : 'bg-white/[0.03] text-zinc-400 border-white/10 hover:border-white/30 hover:text-zinc-200'
-                }`}
-              >
-                {c.code}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       <div role="radiogroup" aria-label={dict.chooseLabel}>
         <span className="block text-[14px] font-medium text-zinc-400 mb-2.5">
           {dict.chooseLabel}

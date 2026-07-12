@@ -8,7 +8,8 @@ import {
   DEFAULT_CURRENCY,
   calc,
   currencySymbol,
-  fmt,
+  egpTo,
+  fmtFx,
   getWebTier,
   tierUsdLabel,
   type QuoteState,
@@ -24,6 +25,7 @@ import { PaymentTerms } from './payment-terms';
 import { IntroSection } from './intro-section';
 import { FooterBlock } from './footer-block';
 import { WebTierPicker } from './web-tier-picker';
+import { CurrencyPicker } from './currency-picker';
 
 export function QuoteBuilder() {
   const [lang, setLang] = useState<Lang>('ar');
@@ -42,7 +44,6 @@ export function QuoteBuilder() {
   const c = useMemo(() => calc(state), [state]);
   const fx = useUsdRates();
 
-  const currency = lang === 'ar' ? 'ج.م' : 'EGP';
   const dash = '—';
   const zero = lang === 'ar' ? '٠' : '0';
 
@@ -53,20 +54,23 @@ export function QuoteBuilder() {
     setState((s) => ({ ...s, [key]: value }));
   }
 
+  const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
+  const fxRate = fx.rates[displayCurrency];
+  const fxSymbol = currencySymbol(displayCurrency, isRtl);
+  // EGP-native retainer amounts rendered in the selected display currency
+  const money = (egp: number) => `${fmtFx(egpTo(egp, fx.rates, displayCurrency))} ${fxSymbol}`;
+
   // Lines shown next to each service-card head
-  const lineDesigns = state.designs > 0 ? `${fmt(c.designs)} ${currency}` : zero;
-  const lineVideos = state.videos > 0 ? `${fmt(c.videos)} ${currency}` : zero;
-  const lineContent = state.content ? `${fmt(c.content)} ${currency}` : zero;
-  const lineAds = state.adsOn ? `${fmt(c.adEff)} ${currency}` : zero;
+  const lineDesigns = state.designs > 0 ? money(c.designs) : zero;
+  const lineVideos = state.videos > 0 ? money(c.videos) : zero;
+  const lineContent = state.content ? money(c.content) : zero;
+  const lineAds = state.adsOn ? money(c.adEff) : zero;
   const webTier = getWebTier(state.webTier);
   const lineWeb = state.web
     ? webTier
       ? tierUsdLabel(webTier, dict.services.web.from)
       : dict.services.web.onDemand
     : dash;
-  const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
-  const fxRate = fx.rates[displayCurrency];
-  const fxSymbol = currencySymbol(displayCurrency, isRtl);
   const fxRateLabel = fxRate < 2 ? fxRate.toFixed(3) : fxRate.toFixed(2);
   const webHint = fx.live
     ? dict.services.web.fxNote(fxRateLabel, fxSymbol)
@@ -84,7 +88,8 @@ export function QuoteBuilder() {
         : 'Large volume — we agree a custom rate on a call.')
     : dict.services.videos.hint;
 
-  const designUnitDisplay = c.dUnit ? c.dUnit : dash;
+  const designUnitDisplay = c.dUnit ? fmtFx(egpTo(c.dUnit, fx.rates, displayCurrency)) : dash;
+  const videoUnitDisplay = fmtFx(egpTo(350, fx.rates, displayCurrency));
 
   return (
     <div
@@ -131,6 +136,13 @@ export function QuoteBuilder() {
                 {dict.invoice.sectionEyebrow}
               </span>
 
+              {/* Display currency — converts the whole quote, retainer and web tiers alike */}
+              <CurrencyPicker
+                value={displayCurrency}
+                onChange={(code) => patch('currency', code)}
+                label={dict.services.web.currencyLabel}
+              />
+
               {/* Designs */}
               <ServiceCard
                 title={dict.services.designs.name}
@@ -147,7 +159,7 @@ export function QuoteBuilder() {
                     <span>
                       {dict.qtyUnit.designs} ·{' '}
                       <span className="font-mono text-zinc-300">{designUnitDisplay}</span>{' '}
-                      {dict.services.designs.unit}
+                      {fxSymbol} {dict.services.designs.unit}
                     </span>
                   }
                 />
@@ -168,8 +180,8 @@ export function QuoteBuilder() {
                   unit={
                     <span>
                       {dict.qtyUnit.videos} ·{' '}
-                      <span className="font-mono text-zinc-300">350</span>{' '}
-                      {dict.services.videos.unit}
+                      <span className="font-mono text-zinc-300">{videoUnitDisplay}</span>{' '}
+                      {fxSymbol} {dict.services.videos.unit}
                     </span>
                   }
                 />
@@ -230,7 +242,6 @@ export function QuoteBuilder() {
                       setState((s) => ({ ...s, webTier: id, web: true }));
                     }}
                     currency={displayCurrency}
-                    onCurrencyChange={(code) => patch('currency', code)}
                     lang={lang}
                     dict={dict.services.web}
                     rates={fx.rates}

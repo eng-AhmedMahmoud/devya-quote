@@ -87,8 +87,23 @@ export function convertUsd(usd: number, rate: number): number {
   return rate < 2 ? Math.round(v * 100) / 100 : Math.round(v);
 }
 
-function fmtFx(n: number): string {
+export function fmtFx(n: number): string {
   return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+/**
+ * Convert an EGP-native amount (the monthly retainer prices) into a display
+ * currency via the USD cross rate. EGP passes through untouched.
+ */
+export function egpTo(
+  amountEgp: number,
+  rates: Record<CurrencyCode, number>,
+  code: CurrencyCode,
+): number {
+  if (code === 'EGP') return amountEgp;
+  const v = amountEgp * (rates[code] / rates.EGP);
+  // Small unit prices (per-design in KWD etc.) need cents; totals round clean.
+  return v < 100 ? Math.round(v * 100) / 100 : Math.round(v);
 }
 
 export function tierUsdLabel(t: WebTier, fromWord: string): string {

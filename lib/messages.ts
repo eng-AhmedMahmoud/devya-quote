@@ -65,8 +65,8 @@ export type MessagesShape = {
     rowAds: string;
     rowSubtotal: string;
     rowMgmt: string;
-    rowDesignsHint: (q: number, unit: number, isSpecial: boolean) => string;
-    rowVideosHint: (q: number) => string;
+    rowDesignsHint: (q: number, unit: string, isSpecial: boolean) => string;
+    rowVideosHint: (q: number, unit: string) => string;
     contentFixedHint: string;
     adsPlatformHint: string;
     mgmtHint: string;
@@ -75,6 +75,7 @@ export type MessagesShape = {
     webOnDemand: string;
     webProjectTitle: string;
     webProjectNote: string;
+    fxDisplayNote: (symbol: string) => string;
   };
   payRows: {
     eyebrow: string;
@@ -112,13 +113,13 @@ const ar: MessagesShape = {
       name: 'التصميمات والمحتوى المرئي',
       desc: 'منشورات التواصل الاجتماعي والإعلانات والمرئيات — التسعير متدرّج حسب الكمية.',
       hint: 'حتى ١٥ ← ٢٠٠ ج.م · من ١٦ إلى ٣٠ ← ١٧٠ ج.م · أكثر من ٣٠ سعر مخصّص (يُحدَّد في اجتماع).',
-      unit: 'ج.م للتصميم',
+      unit: 'للتصميم',
     },
     videos: {
       name: 'مونتاج الفيديو',
       desc: 'مونتاج مقاطع الريلز والإعلانات. الكميات الكبيرة بسعر مخصّص.',
       hint: 'متوسط لفيديو مدّته دقيقة. يُتّفق على سعر مخصّص للكميات الكبيرة.',
-      unit: 'ج.م للفيديو (متوسط)',
+      unit: 'للفيديو (متوسط)',
     },
     content: {
       name: 'المحتوى — سكريبتات وخطة',
@@ -205,7 +206,7 @@ const ar: MessagesShape = {
     rowSubtotal: 'الإجمالي الفرعي',
     rowMgmt: 'الإدارة',
     rowDesignsHint: (q, unit, isSpecial) => `${q} × ${unit}${isSpecial ? ' · سعر مخصّص' : ''}`,
-    rowVideosHint: (q) => `${q} × 350`,
+    rowVideosHint: (q, unit) => `${q} × ${unit}`,
     contentFixedHint: 'ثابت/شهر',
     adsPlatformHint: 'تُحوَّل إلى المنصات',
     mgmtHint: '٢٠٪ على إجمالي المدفوعات',
@@ -214,6 +215,7 @@ const ar: MessagesShape = {
     webOnDemand: 'حسب الطلب',
     webProjectTitle: 'مشروع لمرّة واحدة — تطوير الويب',
     webProjectNote: 'يُسعَّر ويُدفع على دفعات منفصلة عن الاشتراك الشهري (مثلًا ٥٠٪ عند البدء / ٥٠٪ عند التسليم).',
+    fxDisplayNote: (symbol) => `الأسعار معروضة بـ${symbol} بسعر صرف اليوم للتوضيح — الفوترة الفعلية بالجنيه المصري.`,
   },
   payRows: {
     eyebrow: 'مواعيد الدفع',
@@ -296,13 +298,13 @@ const en: MessagesShape = {
       name: 'Design & creative',
       desc: 'Social posts, ad creative, and visuals — tiered pricing based on volume.',
       hint: 'Up to 15 → 200 EGP each · 16–30 → 170 EGP each · 30+ negotiated (confirmed on a call).',
-      unit: 'EGP per design',
+      unit: 'per design',
     },
     videos: {
       name: 'Video editing',
       desc: 'Reels and ad cuts. Higher volumes get a custom rate.',
       hint: 'Average for ~1-minute videos. We agree a custom rate for larger batches.',
-      unit: 'EGP per video (avg.)',
+      unit: 'per video (avg.)',
     },
     content: {
       name: 'Content — scripts & strategy',
@@ -389,7 +391,7 @@ const en: MessagesShape = {
     rowSubtotal: 'Subtotal',
     rowMgmt: 'Management',
     rowDesignsHint: (q, unit, isSpecial) => `${q} × ${unit}${isSpecial ? ' · negotiated rate' : ''}`,
-    rowVideosHint: (q) => `${q} × 350`,
+    rowVideosHint: (q, unit) => `${q} × ${unit}`,
     contentFixedHint: 'Flat / month',
     adsPlatformHint: 'Goes to platforms',
     mgmtHint: '20% on total monthly spend',
@@ -398,6 +400,7 @@ const en: MessagesShape = {
     webOnDemand: 'On demand',
     webProjectTitle: 'One-off project — web development',
     webProjectNote: 'Priced and paid in milestones, separately from the monthly retainer (e.g. 50% kickoff / 50% on delivery).',
+    fxDisplayNote: (symbol) => `Prices shown in ${symbol} at today's rate for clarity — actual billing is in EGP.`,
   },
   payRows: {
     eyebrow: 'Payment schedule',
