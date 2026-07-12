@@ -16,8 +16,9 @@ import {
   makeServicesTable,
   makeTotalsBlock,
 } from '@/lib/docx/builders';
-import { getUsdEgpRate } from '@/lib/fx';
-import { calc, WEB_TIERS, type QuoteState } from '@/lib/pricing';
+import { getUsdRates } from '@/lib/fx';
+import { webFxFor } from '@/lib/docx/builders';
+import { CURRENCIES, calc, WEB_TIERS, type QuoteState } from '@/lib/pricing';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -36,6 +37,7 @@ interface Body {
 /* ----------------------------------------------------------------- */
 
 const WEB_TIER_IDS = new Set<string>(WEB_TIERS.map((t) => t.id));
+const CURRENCY_CODES = new Set<string>(CURRENCIES.map((c) => c.code));
 
 function isQuoteState(v: unknown): v is QuoteState {
   if (!v || typeof v !== 'object') return false;
@@ -48,6 +50,9 @@ function isQuoteState(v: unknown): v is QuoteState {
   }
   // Optional for backwards compatibility with links saved before web tiers existed.
   if (s.webTier != null && !(typeof s.webTier === 'string' && WEB_TIER_IDS.has(s.webTier))) {
+    return false;
+  }
+  if (s.currency != null && !(typeof s.currency === 'string' && CURRENCY_CODES.has(s.currency))) {
     return false;
   }
   return true;
@@ -138,9 +143,10 @@ export async function POST(req: Request) {
 
   const c = calc(state);
 
-  // Daily USD→EGP rate for the web-project row; cached upstream, so this is
-  // effectively free on repeat exports.
-  const fx = await getUsdEgpRate();
+  // Daily USD→currency rates for the web-project rows; cached upstream, so
+  // this is effectively free on repeat exports.
+  const { rates } = await getUsdRates();
+  const webFx = webFxFor(state, rates, isAr);
 
   // Prefer the company name on the cover when both are provided — feels more
   // formal on a quote.  Fall back to person, then to a blank cover.
@@ -189,9 +195,9 @@ export async function POST(req: Request) {
           ...makeCover(isAr, today),
           ...makeParty(isAr),
           servicesHeading,
-          makeServicesTable(isAr, state, c, fx.rate),
+          makeServicesTable(isAr, state, c, webFx),
           totalsHeading,
-          makeTotalsBlock(isAr, c),
+          makeTotalsBlock(isAr, c, state, webFx),
           ...makePaymentTermsTable(isAr),
         ],
       },

@@ -1,8 +1,13 @@
-import { FALLBACK_USD_EGP } from '@/lib/pricing';
+import {
+  CURRENCIES,
+  FALLBACK_USD_RATES,
+  type CurrencyCode,
+} from '@/lib/pricing';
 
 export type FxResult = {
-  rate: number;
-  /** true when the rate came from a live provider, false when the fallback constant was used */
+  /** USD → currency rates for every supported display currency */
+  rates: Record<CurrencyCode, number>;
+  /** true when the rates came from a live provider, false when the fallback constants were used */
   live: boolean;
   /** ISO date of the provider's last update, when known */
   updated: string | null;
@@ -11,8 +16,25 @@ export type FxResult = {
 
 // Providers are keyless public APIs that publish daily USD reference rates.
 // Next's fetch cache (revalidate) keeps us at ~1 upstream call per window,
-// so the daily rate is effectively cached app-wide.
-const REVALIDATE_SECONDS = 21_600; // 6h — provider updates daily; 4 checks/day absorbs late pushes
+// so the daily rates are effectively cached app-wide.
+const REVALIDATE_SECONDS = 21_600; // 6h — providers update daily; 4 checks/day absorbs late pushes
+
+/** Pick supported codes out of a provider's full rate map; fallback fills gaps. */
+function pickRates(all: Record<string, number | undefined>): Record<CurrencyCode, number> | null {
+  const rates = {} as Record<CurrencyCode, number>;
+  let liveCount = 0;
+  for (const { code } of CURRENCIES) {
+    const v = all[code];
+    if (typeof v === 'number' && v > 0) {
+      rates[code] = v;
+      liveCount += 1;
+    } else {
+      rates[code] = FALLBACK_USD_RATES[code];
+    }
+  }
+  // A provider that can't even price the majors is not a usable answer.
+  return liveCount >= CURRENCIES.length - 2 ? rates : null;
+}
 
 async function fromErApi(): Promise<FxResult | null> {
   const res = await fetch('https://open.er-api.com/v6/latest/USD', {
@@ -24,14 +46,10 @@ async function fromErApi(): Promise<FxResult | null> {
     rates?: Record<string, number>;
     time_last_update_utc?: string;
   };
-  const rate = data?.rates?.EGP;
-  if (data?.result !== 'success' || typeof rate !== 'number' || !(rate > 0)) return null;
-  return {
-    rate,
-    live: true,
-    updated: data.time_last_update_utc ?? null,
-    source: 'er-api',
-  };
+  if (data?.result !== 'success' || !data.rates) return null;
+  const rates = pickRates(data.rates);
+  if (!rates) return null;
+  return { rates, live: true, updated: data.time_last_update_utc ?? null, source: 'er-api' };
 }
 
 async function fromCurrencyApi(): Promise<FxResult | null> {
@@ -41,13 +59,17 @@ async function fromCurrencyApi(): Promise<FxResult | null> {
   );
   if (!res.ok) return null;
   const data = (await res.json()) as { date?: string; usd?: Record<string, number> };
-  const rate = data?.usd?.egp;
-  if (typeof rate !== 'number' || !(rate > 0)) return null;
-  return { rate, live: true, updated: data.date ?? null, source: 'currency-api' };
+  if (!data?.usd) return null;
+  // This provider keys currencies in lowercase.
+  const upper: Record<string, number> = {};
+  for (const [k, v] of Object.entries(data.usd)) upper[k.toUpperCase()] = v;
+  const rates = pickRates(upper);
+  if (!rates) return null;
+  return { rates, live: true, updated: data.date ?? null, source: 'currency-api' };
 }
 
-/** USD→EGP daily rate: primary provider, then mirror, then hardcoded fallback. */
-export async function getUsdEgpRate(): Promise<FxResult> {
+/** Daily USD→(MENA/Gulf/EUR) rates: primary provider, then mirror, then hardcoded fallbacks. */
+export async function getUsdRates(): Promise<FxResult> {
   try {
     const primary = await fromErApi();
     if (primary) return primary;
@@ -60,5 +82,5 @@ export async function getUsdEgpRate(): Promise<FxResult> {
   } catch {
     /* fall through */
   }
-  return { rate: FALLBACK_USD_EGP, live: false, updated: null, source: 'fallback' };
+  return { rates: { ...FALLBACK_USD_RATES }, live: false, updated: null, source: 'fallback' };
 }

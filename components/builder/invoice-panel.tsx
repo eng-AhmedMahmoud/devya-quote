@@ -4,7 +4,17 @@ import { useState } from 'react';
 import { Printer, ExternalLink, FileDown } from 'lucide-react';
 import type { Lang } from '@/lib/messages';
 import { MESSAGES } from '@/lib/messages';
-import { calc, fmt, getWebTier, tierEgpLabel, tierUsdLabel, type QuoteState } from '@/lib/pricing';
+import {
+  DEFAULT_CURRENCY,
+  calc,
+  currencySymbol,
+  fmt,
+  getWebTier,
+  tierFxLabel,
+  tierUsdLabel,
+  type CurrencyCode,
+  type QuoteState,
+} from '@/lib/pricing';
 
 function encodeState(state: QuoteState): string {
   if (typeof window === 'undefined') return '';
@@ -15,7 +25,7 @@ interface Props {
   state: QuoteState;
   lang: Lang;
   defaultAdBudget: number;
-  fxRate: number;
+  fxRates: Record<CurrencyCode, number>;
 }
 
 const BOOKING_URL = process.env.NEXT_PUBLIC_BOOKING_URL || 'https://booking.devya.dev';
@@ -58,7 +68,7 @@ function Row({
   );
 }
 
-export function InvoicePanel({ state, lang, fxRate }: Props) {
+export function InvoicePanel({ state, lang, fxRates }: Props) {
   const c = calc(state);
   const t = MESSAGES[lang].invoice;
   const w = MESSAGES[lang].services.web;
@@ -67,6 +77,9 @@ export function InvoicePanel({ state, lang, fxRate }: Props) {
 
   const any = state.designs > 0 || state.videos > 0 || state.content || state.adsOn;
   const webTier = state.web ? getWebTier(state.webTier) : null;
+  const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
+  const fxRate = fxRates[displayCurrency];
+  const fxSymbol = currencySymbol(displayCurrency, lang === 'ar');
 
   function handlePrintPreview() {
     const qs = new URLSearchParams({
@@ -164,7 +177,7 @@ export function InvoicePanel({ state, lang, fxRate }: Props) {
           <div className="flex items-baseline justify-between gap-3 mt-1">
             <span className="text-[13px] text-zinc-500">{w.tiers[webTier.id].name}</span>
             <span className="font-mono text-[13px] text-zinc-400 whitespace-nowrap">
-              {w.approx} {tierEgpLabel(webTier, fxRate, w.from, currency)}
+              {w.approx} {tierFxLabel(webTier, fxRate, w.from, fxSymbol)}
             </span>
           </div>
           <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">{t.webProjectNote}</p>

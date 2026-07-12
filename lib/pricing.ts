@@ -36,11 +36,59 @@ export function getWebTier(id: WebTierId | null | undefined): WebTier | null {
   return WEB_TIERS.find((t) => t.id === id) ?? null;
 }
 
-/** Last-resort rate when the FX API is unreachable; live rate always wins. */
-export const FALLBACK_USD_EGP = 48.17;
+/**
+ * Display currencies for web-tier conversion — MENA/Gulf + Egypt + EUR.
+ * USD is the pricing base and is always shown; these are the equivalents.
+ */
+export type CurrencyCode =
+  | 'EGP' | 'SAR' | 'AED' | 'QAR' | 'KWD' | 'BHD' | 'OMR' | 'JOD' | 'EUR';
 
-export function usdToEgp(usd: number, rate: number): number {
-  return Math.round(usd * rate);
+export type Currency = { code: CurrencyCode; en: string; ar: string };
+
+export const CURRENCIES: Currency[] = [
+  { code: 'EGP', en: 'EGP', ar: 'ج.م' },
+  { code: 'SAR', en: 'SAR', ar: 'ر.س' },
+  { code: 'AED', en: 'AED', ar: 'د.إ' },
+  { code: 'QAR', en: 'QAR', ar: 'ر.ق' },
+  { code: 'KWD', en: 'KWD', ar: 'د.ك' },
+  { code: 'BHD', en: 'BHD', ar: 'د.ب' },
+  { code: 'OMR', en: 'OMR', ar: 'ر.ع' },
+  { code: 'JOD', en: 'JOD', ar: 'د.أ' },
+  { code: 'EUR', en: 'EUR', ar: 'يورو' },
+];
+
+export const DEFAULT_CURRENCY: CurrencyCode = 'EGP';
+
+export function currencySymbol(code: CurrencyCode, isAr: boolean): string {
+  const c = CURRENCIES.find((x) => x.code === code);
+  return c ? (isAr ? c.ar : c.en) : code;
+}
+
+/**
+ * Last-resort rates when the FX API is unreachable; the live daily rate
+ * always wins. Gulf currencies are USD-pegged so these barely drift;
+ * EGP/EUR floats are refreshed by /api/fx anyway.
+ */
+export const FALLBACK_USD_RATES: Record<CurrencyCode, number> = {
+  EGP: 48.17,
+  SAR: 3.75,
+  AED: 3.6725,
+  QAR: 3.64,
+  KWD: 0.306,
+  BHD: 0.376,
+  OMR: 0.3845,
+  JOD: 0.709,
+  EUR: 0.86,
+};
+
+/** KWD/BHD/OMR are strong units — whole-number rounding would eat real money on small ranges. */
+export function convertUsd(usd: number, rate: number): number {
+  const v = usd * rate;
+  return rate < 2 ? Math.round(v * 100) / 100 : Math.round(v);
+}
+
+function fmtFx(n: number): string {
+  return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
 export function tierUsdLabel(t: WebTier, fromWord: string): string {
@@ -49,11 +97,11 @@ export function tierUsdLabel(t: WebTier, fromWord: string): string {
     : `$${fmt(t.usdMin)} – $${fmt(t.usdMax)}`;
 }
 
-export function tierEgpLabel(t: WebTier, rate: number, fromWord: string, egp: string): string {
-  const min = fmt(usdToEgp(t.usdMin, rate));
+export function tierFxLabel(t: WebTier, rate: number, fromWord: string, symbol: string): string {
+  const min = fmtFx(convertUsd(t.usdMin, rate));
   return t.usdMax === null
-    ? `${fromWord} ${min} ${egp}`
-    : `${min} – ${fmt(usdToEgp(t.usdMax, rate))} ${egp}`;
+    ? `${fromWord} ${min} ${symbol}`
+    : `${min} – ${fmtFx(convertUsd(t.usdMax, rate))} ${symbol}`;
 }
 
 export type QuoteState = {
@@ -65,6 +113,8 @@ export type QuoteState = {
   web: boolean;
   /** Selected web tier; null = scoped on a call. Absent in old saved links. */
   webTier?: WebTierId | null;
+  /** Display currency for web-tier conversion. Absent in old saved links → EGP. */
+  currency?: CurrencyCode;
 };
 
 export type QuoteCalc = {

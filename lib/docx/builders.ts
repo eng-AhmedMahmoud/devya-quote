@@ -30,14 +30,30 @@ import { COLORS, FONT_AR, FONT_LATIN } from './colors';
 import { DEVYA_PARTY } from '@/lib/devya-party';
 import { MESSAGES } from '@/lib/messages';
 import {
-  FALLBACK_USD_EGP,
+  DEFAULT_CURRENCY,
+  FALLBACK_USD_RATES,
   calc,
+  currencySymbol,
   getWebTier,
   PRICE,
-  tierEgpLabel,
+  tierFxLabel,
   tierUsdLabel,
+  type CurrencyCode,
   type QuoteState,
 } from '@/lib/pricing';
+
+/** Resolve the web-tier display rate + symbol for a given quote state. */
+export function webFxFor(
+  state: QuoteState,
+  rates: Record<CurrencyCode, number>,
+  isAr: boolean,
+): { rate: number; symbol: string } {
+  const code = state.currency ?? DEFAULT_CURRENCY;
+  return {
+    rate: rates[code] ?? FALLBACK_USD_RATES[code],
+    symbol: currencySymbol(code, isAr),
+  };
+}
 
 /* ----------------------------------------------------------------- */
 /* Small util helpers                                                 */
@@ -479,7 +495,7 @@ export function makeServicesTable(
   isAr: boolean,
   state: QuoteState,
   c: ReturnType<typeof calc>,
-  fxRate: number = FALLBACK_USD_EGP,
+  fx: { rate: number; symbol: string } = { rate: FALLBACK_USD_RATES.EGP, symbol: currencySymbol('EGP', isAr) },
 ): Table {
   const lbl = isAr
     ? {
@@ -611,7 +627,7 @@ export function makeServicesTable(
     const fromWord = isAr ? 'من' : 'from';
     const heading = tierCopy ? `${lbl.webHeading} — ${tierCopy.name}` : lbl.webHeading;
     const note = tierCopy ? `${tierCopy.desc} ${lbl.webNoteTier}` : lbl.webNote;
-    const unitText = tier ? `≈ ${tierEgpLabel(tier, fxRate, fromWord, lbl.egp)}` : '—';
+    const unitText = tier ? `≈ ${tierFxLabel(tier, fx.rate, fromWord, fx.symbol)}` : '—';
     const lineText = tier ? tierUsdLabel(tier, fromWord) : '—';
     tableRows.push(
       new TableRow({
@@ -681,6 +697,8 @@ export function makeServicesTable(
 export function makeTotalsBlock(
   isAr: boolean,
   c: ReturnType<typeof calc>,
+  state?: QuoteState,
+  fx?: { rate: number; symbol: string },
 ): Table {
   const lbl = isAr
     ? {
@@ -688,12 +706,14 @@ export function makeTotalsBlock(
         mgmt: 'إدارة المشروع (20٪)',
         total: 'الإجمالي',
         egp: 'جنيه',
+        from: 'من',
       }
     : {
         subtotal: 'Subtotal',
         mgmt: 'Project management (20%)',
         total: 'Total',
         egp: 'EGP',
+        from: 'from',
       };
 
   const row = (
@@ -760,19 +780,35 @@ export function makeTotalsBlock(
       ],
     });
 
+  const rows: TableRow[] = [
+    row(lbl.subtotal, `${fmtMoney(c.subtotal)} ${lbl.egp}`),
+    row(lbl.mgmt, `${fmtMoney(c.mgmt)} ${lbl.egp}`, { fill: 'F4F4F5' }),
+    row(lbl.total, `${fmtMoney(c.total)} ${lbl.egp}`, {
+      bold: true,
+      size: 28,
+      fill: COLORS.ink,
+      color: 'FFFFFF',
+    }),
+  ];
+
+  // One-off web project — priced in USD outside the monthly retainer, but it
+  // must still appear with the totals so the printed quote carries the cost.
+  const tier = state?.web ? getWebTier(state.webTier) : null;
+  if (tier && fx) {
+    const m = MESSAGES[isAr ? 'ar' : 'en'];
+    rows.push(
+      row(
+        `${m.invoice.webProjectTitle} — ${m.services.web.tiers[tier.id].name}`,
+        `${tierUsdLabel(tier, lbl.from)}  (≈ ${tierFxLabel(tier, fx.rate, lbl.from, fx.symbol)})`,
+        { fill: 'F4F4F5', size: 20 },
+      ),
+    );
+  }
+
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     borders: tableBorders(COLORS.divider),
-    rows: [
-      row(lbl.subtotal, `${fmtMoney(c.subtotal)} ${lbl.egp}`),
-      row(lbl.mgmt, `${fmtMoney(c.mgmt)} ${lbl.egp}`, { fill: 'F4F4F5' }),
-      row(lbl.total, `${fmtMoney(c.total)} ${lbl.egp}`, {
-        bold: true,
-        size: 28,
-        fill: COLORS.ink,
-        color: 'FFFFFF',
-      }),
-    ],
+    rows,
   });
 }
 

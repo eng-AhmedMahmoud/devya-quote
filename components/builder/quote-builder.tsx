@@ -4,8 +4,16 @@ import { useMemo, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { DevyaMark } from '@/components/ui/devya-logo';
 import { MESSAGES, type Lang } from '@/lib/messages';
-import { fmt, calc, getWebTier, tierUsdLabel, type QuoteState } from '@/lib/pricing';
-import { useUsdEgp } from '@/lib/use-fx';
+import {
+  DEFAULT_CURRENCY,
+  calc,
+  currencySymbol,
+  fmt,
+  getWebTier,
+  tierUsdLabel,
+  type QuoteState,
+} from '@/lib/pricing';
+import { useUsdRates } from '@/lib/use-fx';
 import { LangToggle } from './lang-toggle';
 import { Stepper } from './stepper';
 import { Switch } from './switch';
@@ -27,11 +35,12 @@ export function QuoteBuilder() {
     adBudget: 30000,
     web: false,
     webTier: null,
+    currency: DEFAULT_CURRENCY,
   });
 
   const dict = useMemo(() => MESSAGES[lang], [lang]);
   const c = useMemo(() => calc(state), [state]);
-  const fx = useUsdEgp();
+  const fx = useUsdRates();
 
   const currency = lang === 'ar' ? 'ج.م' : 'EGP';
   const dash = '—';
@@ -55,11 +64,14 @@ export function QuoteBuilder() {
       ? tierUsdLabel(webTier, dict.services.web.from)
       : dict.services.web.onDemand
     : dash;
-  const fxRateLabel = fx.rate.toFixed(2);
+  const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
+  const fxRate = fx.rates[displayCurrency];
+  const fxSymbol = currencySymbol(displayCurrency, isRtl);
+  const fxRateLabel = fxRate < 2 ? fxRate.toFixed(3) : fxRate.toFixed(2);
   const webHint = state.web
     ? fx.live
-      ? dict.services.web.fxNote(fxRateLabel)
-      : dict.services.web.fxNoteFallback(fxRateLabel)
+      ? dict.services.web.fxNote(fxRateLabel, fxSymbol)
+      : dict.services.web.fxNoteFallback(fxRateLabel, fxSymbol)
     : undefined;
 
   // Dynamic hints
@@ -217,9 +229,11 @@ export function QuoteBuilder() {
                     <WebTierPicker
                       value={state.webTier ?? null}
                       onChange={(id) => patch('webTier', id)}
+                      currency={displayCurrency}
+                      onCurrencyChange={(code) => patch('currency', code)}
                       lang={lang}
                       dict={dict.services.web}
-                      rate={fx.rate}
+                      rates={fx.rates}
                     />
                   </div>
                 )}
@@ -231,7 +245,7 @@ export function QuoteBuilder() {
               <span className="block font-medium text-[14px] text-zinc-500 tracking-wide mb-4">
                 {dict.invoice.aside}
               </span>
-              <InvoicePanel state={state} lang={lang} defaultAdBudget={30000} fxRate={fx.rate} />
+              <InvoicePanel state={state} lang={lang} defaultAdBudget={30000} fxRates={fx.rates} />
             </aside>
           </div>
         </section>

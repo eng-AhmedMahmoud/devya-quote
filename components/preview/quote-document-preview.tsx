@@ -4,12 +4,15 @@ import { DEVYA_PARTY } from '@/lib/devya-party';
 import { DevyaMark } from '@/components/ui/devya-logo';
 import { MESSAGES, type Lang } from '@/lib/messages';
 import {
-  FALLBACK_USD_EGP,
+  DEFAULT_CURRENCY,
+  FALLBACK_USD_RATES,
   calc,
+  currencySymbol,
   fmt,
   getWebTier,
-  tierEgpLabel,
+  tierFxLabel,
   tierUsdLabel,
+  type CurrencyCode,
   type QuoteState,
 } from '@/lib/pricing';
 
@@ -136,8 +139,8 @@ interface Props {
   state: QuoteState;
   lang: Lang;
   date?: string; // YYYY-MM-DD
-  /** Daily USD→EGP rate for web-project tiers (from /api/fx) */
-  fxRate?: number;
+  /** Daily USD→currency rates for web-project tiers (from /api/fx) */
+  fxRates?: Record<CurrencyCode, number>;
 }
 
 function todayLocal(): string {
@@ -157,11 +160,13 @@ function formatDateLocal(iso: string, lang: Lang): string {
   }).format(date);
 }
 
-export function QuoteDocumentPreview({ state, lang, date, fxRate }: Props) {
+export function QuoteDocumentPreview({ state, lang, date, fxRates }: Props) {
   const isAr = lang === 'ar';
   const d = dict[lang];
   const c = calc(state);
-  const rate = fxRate && fxRate > 0 ? fxRate : FALLBACK_USD_EGP;
+  const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
+  const rate = fxRates?.[displayCurrency] ?? FALLBACK_USD_RATES[displayCurrency];
+  const fxSymbol = currencySymbol(displayCurrency, isAr);
   const webTier = state.web ? getWebTier(state.webTier) : null;
   const w = MESSAGES[lang].services.web;
   const today = date || todayLocal();
@@ -243,7 +248,7 @@ export function QuoteDocumentPreview({ state, lang, date, fxRate }: Props) {
                 name={webTier ? `${d.web} — ${w.tiers[webTier.id].name}` : d.web}
                 note={webTier ? `${w.tiers[webTier.id].desc} ${MESSAGES[lang].invoice.webProjectNote}` : d.webNote}
                 qty={dash}
-                unitVal={webTier ? `${w.approx} ${tierEgpLabel(webTier, rate, w.from, currency)}` : dash}
+                unitVal={webTier ? `${w.approx} ${tierFxLabel(webTier, rate, w.from, fxSymbol)}` : dash}
                 lineVal={webTier ? tierUsdLabel(webTier, w.from) : dash}
               />
             )}
@@ -280,6 +285,28 @@ export function QuoteDocumentPreview({ state, lang, date, fxRate }: Props) {
             </tr>
           </tbody>
         </table>
+
+        {/* One-off web project — separate from the monthly retainer */}
+        {webTier && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 16 }}>
+            <tbody>
+              <tr style={{ background: '#fafaf9' }}>
+                <td style={tdLabel(isAr)}>
+                  <strong>{MESSAGES[lang].invoice.webProjectTitle}</strong>
+                  <div style={{ fontSize: '9pt', color: '#71717a', marginTop: 2 }}>
+                    {w.tiers[webTier.id].name} — {MESSAGES[lang].invoice.webProjectNote}
+                  </div>
+                </td>
+                <td style={tdVal(isAr)}>
+                  <strong>{tierUsdLabel(webTier, w.from)}</strong>
+                  <div style={{ fontSize: '9pt', color: '#71717a', marginTop: 2 }}>
+                    {w.approx} {tierFxLabel(webTier, rate, w.from, fxSymbol)}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        )}
       </>
     );
   }

@@ -1,28 +1,39 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FALLBACK_USD_EGP } from '@/lib/pricing';
+import { FALLBACK_USD_RATES, type CurrencyCode } from '@/lib/pricing';
 
 export type FxState = {
-  rate: number;
-  /** false until /api/fx confirms a live provider rate */
+  /** USD → currency rates for every supported display currency */
+  rates: Record<CurrencyCode, number>;
+  /** false until /api/fx confirms live provider rates */
   live: boolean;
   /** true once the fetch settled (success or failure) — lets callers wait before printing */
   settled: boolean;
 };
 
-/** Daily USD→EGP rate from /api/fx; renders with the fallback until the live rate lands. */
-export function useUsdEgp(): FxState {
-  const [fx, setFx] = useState<FxState>({ rate: FALLBACK_USD_EGP, live: false, settled: false });
+/** Daily USD→currency rates from /api/fx; renders with fallbacks until live rates land. */
+export function useUsdRates(): FxState {
+  const [fx, setFx] = useState<FxState>({
+    rates: { ...FALLBACK_USD_RATES },
+    live: false,
+    settled: false,
+  });
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/fx')
+    // ?v=2 busts browser caches of the pre-multi-currency response shape
+    // (old body had a single `rate` field and max-age=3600).
+    fetch('/api/fx?v=2')
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { rate?: number; live?: boolean } | null) => {
+      .then((d: { rates?: Record<string, number>; live?: boolean } | null) => {
         if (cancelled) return;
-        if (d && typeof d.rate === 'number' && d.rate > 0) {
-          setFx({ rate: d.rate, live: d.live === true, settled: true });
+        if (d?.rates && typeof d.rates === 'object') {
+          setFx((s) => ({
+            rates: { ...s.rates, ...(d.rates as Record<CurrencyCode, number>) },
+            live: d.live === true,
+            settled: true,
+          }));
         } else {
           setFx((s) => ({ ...s, settled: true }));
         }

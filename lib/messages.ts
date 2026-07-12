@@ -41,9 +41,10 @@ export type MessagesShape = {
       notSureDesc: string;
       from: string;
       approx: string;
+      currencyLabel: string;
       tiers: Record<WebTierId, WebTierCopy>;
-      fxNote: (rate: string) => string;
-      fxNoteFallback: (rate: string) => string;
+      fxNote: (rate: string, symbol: string) => string;
+      fxNoteFallback: (rate: string, symbol: string) => string;
     };
   };
   qtyUnit: { designs: string; videos: string };
@@ -133,7 +134,7 @@ const ar: MessagesShape = {
     },
     web: {
       name: 'مواقع وتطبيقات وأنظمة',
-      desc: 'اختر نوع المشروع لتظهر فئة السعر فورًا — بالدولار وما يعادله بالجنيه بسعر صرف اليوم.',
+      desc: 'اختر نوع المشروع لتظهر فئة السعر فورًا — بالدولار وما يعادله بعملتك بسعر صرف اليوم.',
       toggle: 'أحتاج موقعًا / نظامًا (مشروع مستقل — غير مشمول في الاشتراك الشهري)',
       onDemand: 'حسب الطلب',
       chooseLabel: 'ما نوع المشروع؟',
@@ -178,8 +179,9 @@ const ar: MessagesShape = {
           who: 'مؤسسات · منتجات رقمية بمتطلبات خاصة',
         },
       },
-      fxNote: (rate) => `التحويل بسعر صرف اليوم: ١ دولار ≈ ${rate} ج.م — يُحدَّث يوميًا تلقائيًا.`,
-      fxNoteFallback: (rate) => `تحويل تقريبي: ١ دولار ≈ ${rate} ج.م — تعذّر جلب سعر اليوم، يُؤكَّد الرقم النهائي في العرض.`,
+      currencyLabel: 'اعرض الأسعار بـ',
+      fxNote: (rate, symbol) => `التحويل بسعر صرف اليوم: ١ دولار ≈ ${rate} ${symbol} — يُحدَّث يوميًا تلقائيًا.`,
+      fxNoteFallback: (rate, symbol) => `تحويل تقريبي: ١ دولار ≈ ${rate} ${symbol} — تعذّر جلب سعر اليوم، يُؤكَّد الرقم النهائي في العرض.`,
     },
   },
   qtyUnit: {
@@ -316,7 +318,7 @@ const en: MessagesShape = {
     },
     web: {
       name: 'Websites, apps & systems',
-      desc: 'Pick a project type to see its price band instantly — in USD and today’s EGP equivalent.',
+      desc: 'Pick a project type to see its price band instantly — in USD and today’s equivalent in your currency.',
       toggle: 'I need a website / system (one-off project — not part of the monthly)',
       onDemand: 'On demand',
       chooseLabel: 'What kind of project?',
@@ -361,8 +363,9 @@ const en: MessagesShape = {
           who: 'Enterprises · digital products with special requirements',
         },
       },
-      fxNote: (rate) => `Converted at today’s rate: $1 ≈ ${rate} EGP — refreshed daily, automatically.`,
-      fxNoteFallback: (rate) => `Approximate conversion: $1 ≈ ${rate} EGP — live rate unavailable; final figure confirmed on the quote.`,
+      currencyLabel: 'Show prices in',
+      fxNote: (rate, symbol) => `Converted at today’s rate: $1 ≈ ${rate} ${symbol} — refreshed daily, automatically.`,
+      fxNoteFallback: (rate, symbol) => `Approximate conversion: $1 ≈ ${rate} ${symbol} — live rate unavailable; final figure confirmed on the quote.`,
     },
   },
   qtyUnit: {
