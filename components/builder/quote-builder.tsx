@@ -68,11 +68,9 @@ export function QuoteBuilder() {
   const fxRate = fx.rates[displayCurrency];
   const fxSymbol = currencySymbol(displayCurrency, isRtl);
   const fxRateLabel = fxRate < 2 ? fxRate.toFixed(3) : fxRate.toFixed(2);
-  const webHint = state.web
-    ? fx.live
-      ? dict.services.web.fxNote(fxRateLabel, fxSymbol)
-      : dict.services.web.fxNoteFallback(fxRateLabel, fxSymbol)
-    : undefined;
+  const webHint = fx.live
+    ? dict.services.web.fxNote(fxRateLabel, fxSymbol)
+    : dict.services.web.fxNoteFallback(fxRateLabel, fxSymbol);
 
   // Dynamic hints
   const designsHint = state.designs > 30
@@ -224,19 +222,20 @@ export function QuoteBuilder() {
                   onChange={(b) => patch('web', b)}
                   label={dict.services.web.toggle}
                 />
-                {state.web && (
-                  <div className="mt-4">
-                    <WebTierPicker
-                      value={state.webTier ?? null}
-                      onChange={(id) => patch('webTier', id)}
-                      currency={displayCurrency}
-                      onCurrencyChange={(code) => patch('currency', code)}
-                      lang={lang}
-                      dict={dict.services.web}
-                      rates={fx.rates}
-                    />
-                  </div>
-                )}
+                {/* Tier catalogue is always visible — picking a tier also enables the service */}
+                <div className="mt-4">
+                  <WebTierPicker
+                    value={state.webTier ?? null}
+                    onChange={(id) => {
+                      setState((s) => ({ ...s, webTier: id, web: true }));
+                    }}
+                    currency={displayCurrency}
+                    onCurrencyChange={(code) => patch('currency', code)}
+                    lang={lang}
+                    dict={dict.services.web}
+                    rates={fx.rates}
+                  />
+                </div>
               </ServiceCard>
             </div>
 
