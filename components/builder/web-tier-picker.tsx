@@ -22,7 +22,7 @@ export function WebTierPicker({ value, onChange, lang, dict, rate }: Props) {
 
   return (
     <div role="radiogroup" aria-label={dict.chooseLabel} className="mt-1">
-      <span className="block text-[13px] font-medium text-zinc-400 mb-2.5">
+      <span className="block text-[14px] font-medium text-zinc-400 mb-2.5">
         {dict.chooseLabel}
       </span>
 
@@ -54,20 +54,20 @@ export function WebTierPicker({ value, onChange, lang, dict, rate }: Props) {
                     {selected && <Check className="h-3 w-3 text-zinc-950" strokeWidth={3} />}
                   </span>
                   <span className="min-w-0">
-                    <span className={`block text-sm font-semibold leading-tight ${selected ? 'text-white' : 'text-zinc-200'}`}>
+                    <span className={`block text-[15px] font-semibold leading-tight ${selected ? 'text-white' : 'text-zinc-200'}`}>
                       {copy.name}
                     </span>
-                    <span className="block text-xs text-zinc-500 mt-1 leading-relaxed">
+                    <span className="block text-[13px] text-zinc-500 mt-1 leading-relaxed">
                       {copy.desc}
                     </span>
-                    <span className="block text-[11px] text-zinc-600 mt-1">{copy.who}</span>
+                    <span className="block text-[12px] text-zinc-600 mt-1">{copy.who}</span>
                   </span>
                 </div>
                 <span className="flex-none text-end">
-                  <span className={`block font-mono font-bold text-sm whitespace-nowrap ${selected ? 'text-white' : 'text-zinc-200'}`}>
+                  <span className={`block font-mono font-bold text-[15px] whitespace-nowrap ${selected ? 'text-white' : 'text-zinc-200'}`}>
                     {tierUsdLabel(tier, dict.from)}
                   </span>
-                  <span className="block font-mono text-[11px] text-zinc-500 mt-1 whitespace-nowrap">
+                  <span className="block font-mono text-[12px] text-zinc-500 mt-1 whitespace-nowrap">
                     {dict.approx} {tierEgpLabel(tier, rate, dict.from, currency)}
                   </span>
                 </span>
@@ -90,12 +90,12 @@ export function WebTierPicker({ value, onChange, lang, dict, rate }: Props) {
         >
           <div className="flex items-center justify-between gap-3">
             <span>
-              <span className={`block text-sm font-semibold ${value === null ? 'text-white' : 'text-zinc-300'}`}>
+              <span className={`block text-[15px] font-semibold ${value === null ? 'text-white' : 'text-zinc-300'}`}>
                 {dict.notSure}
               </span>
-              <span className="block text-xs text-zinc-500 mt-0.5">{dict.notSureDesc}</span>
+              <span className="block text-[13px] text-zinc-500 mt-0.5">{dict.notSureDesc}</span>
             </span>
-            <span className="flex-none font-mono text-sm text-zinc-400 whitespace-nowrap">
+            <span className="flex-none font-mono text-[15px] text-zinc-400 whitespace-nowrap">
               {dict.onDemand}
             </span>
           </div>

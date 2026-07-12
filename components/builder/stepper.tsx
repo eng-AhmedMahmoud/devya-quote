@@ -24,13 +24,13 @@ export function Stepper({ value, onChange, min = 0, ariaLabelDec, ariaLabelInc, 
       <button type="button" className={btn} onClick={dec} aria-label={ariaLabelDec}>
         <Minus className="h-4 w-4" />
       </button>
-      <span className="font-mono font-bold text-xl text-white min-w-[2.5rem] text-center tabular-nums">
+      <span className="font-mono font-bold text-[21px] text-white min-w-[2.5rem] text-center tabular-nums">
         {value}
       </span>
       <button type="button" className={btn} onClick={inc} aria-label={ariaLabelInc}>
         <Plus className="h-4 w-4" />
       </button>
-      {unit && <span className="text-xs text-zinc-400">{unit}</span>}
+      {unit && <span className="text-[13px] text-zinc-400">{unit}</span>}
     </div>
   );
 }

@@ -87,11 +87,11 @@ export function QuoteBuilder() {
         <div className="container mx-auto px-5 sm:px-8 max-w-[1180px] h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <DevyaMark size={26} className="text-white" />
-            <span className="font-sora font-semibold tracking-[0.22em] text-white text-base uppercase">
+            <span className="font-sora font-semibold tracking-[0.22em] text-white text-[17px] uppercase">
               Devya
             </span>
             <span className="hidden sm:block h-5 w-px bg-white/10" />
-            <span className="hidden sm:block text-xs text-zinc-400 font-medium">
+            <span className="hidden sm:block text-[13px] text-zinc-400 font-medium">
               {dict.brand.sub}
             </span>
           </div>
@@ -101,7 +101,7 @@ export function QuoteBuilder() {
               href="https://devya.dev"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-950 bg-white rounded-full px-3.5 py-2 transition hover:bg-zinc-200 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.3)]"
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-zinc-950 bg-white rounded-full px-3.5 py-2 transition hover:bg-zinc-200 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.3)]"
             >
               <ArrowRight className={`h-3.5 w-3.5 ${isRtl ? 'rotate-180' : ''}`} />
               <span className="font-mono">{dict.brand.cta}</span>
@@ -117,7 +117,7 @@ export function QuoteBuilder() {
           <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_0.9fr] gap-6 lg:gap-8 py-10 sm:py-14 items-start">
             {/* Controls column */}
             <div>
-              <span className="block font-medium text-[13px] text-zinc-500 tracking-wide mb-4">
+              <span className="block font-medium text-[14px] text-zinc-500 tracking-wide mb-4">
                 {dict.invoice.sectionEyebrow}
               </span>
 
@@ -228,7 +228,7 @@ export function QuoteBuilder() {
 
             {/* Invoice column */}
             <aside className="lg:sticky lg:top-24">
-              <span className="block font-medium text-[13px] text-zinc-500 tracking-wide mb-4">
+              <span className="block font-medium text-[14px] text-zinc-500 tracking-wide mb-4">
                 {dict.invoice.aside}
               </span>
               <InvoicePanel state={state} lang={lang} defaultAdBudget={30000} fxRate={fx.rate} />

@@ -50,9 +50,9 @@ export function BudgetInput({ value, onChange, lang, disabled }: Props) {
             onChange(n);
             setText(fmt(n));
           }}
-          className="flex-1 bg-transparent border-0 outline-none text-white font-mono font-bold text-lg w-full"
+          className="flex-1 bg-transparent border-0 outline-none text-white font-mono font-bold text-[19px] w-full"
         />
-        <span className="text-xs text-zinc-500 whitespace-nowrap">
+        <span className="text-[13px] text-zinc-500 whitespace-nowrap">
           {lang === 'ar' ? 'ج.م / شهر' : 'EGP / mo'}
         </span>
       </div>
@@ -65,7 +65,7 @@ export function BudgetInput({ value, onChange, lang, disabled }: Props) {
               key={c.value}
               type="button"
               onClick={() => onChange(c.value)}
-              className={`font-mono font-bold text-xs px-3.5 py-1.5 rounded-full border transition ${
+              className={`font-mono font-bold text-[13px] px-3.5 py-1.5 rounded-full border transition ${
                 active
                   ? 'bg-white text-zinc-950 border-white'
                   : 'bg-white/[0.03] text-zinc-400 border-white/10 hover:bg-white hover:text-zinc-950 hover:border-white'
@@ -77,7 +77,7 @@ export function BudgetInput({ value, onChange, lang, disabled }: Props) {
         })}
       </div>
 
-      <div className={`text-xs mt-3 ${belowMin ? 'text-white font-medium' : 'text-zinc-500'}`}>
+      <div className={`text-[13px] mt-3 ${belowMin ? 'text-white font-medium' : 'text-zinc-500'}`}>
         {belowMin ? t.overMin : t.minHint}
       </div>
     </div>

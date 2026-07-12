@@ -44,7 +44,7 @@ export function DevyaLogo({ className, withWordmark = true, size = 28 }: Props) 
     <span className={`inline-flex items-center gap-2 ${className ?? ''}`}>
       <DevyaMark size={size} className="text-white" />
       {withWordmark && (
-        <span className="font-sora font-semibold tracking-tight text-white text-[15px] leading-none">
+        <span className="font-sora font-semibold tracking-tight text-white text-[16px] leading-none">
           devya
         </span>
       )}

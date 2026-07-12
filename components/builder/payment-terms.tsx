@@ -12,14 +12,14 @@ export function PaymentTerms({ lang }: Props) {
   return (
     <section className="py-12 sm:py-16 border-t border-white/5">
       <div className="container mx-auto px-5 sm:px-8 max-w-[1180px]">
-        <span className="inline-flex items-center gap-2.5 text-[13px] font-bold text-zinc-400">
+        <span className="inline-flex items-center gap-2.5 text-[14px] font-bold text-zinc-400">
           <span className="block w-6 h-0.5 rounded bg-gradient-to-b from-white to-zinc-400" />
           {t.eyebrow}
         </span>
-        <h2 className="font-sora font-bold text-3xl sm:text-4xl text-white mt-3.5 leading-tight">
+        <h2 className="font-sora font-bold text-[32px] sm:text-4xl text-white mt-3.5 leading-tight">
           {t.h2}
         </h2>
-        <p className="mt-3.5 text-zinc-400 max-w-[64ch] text-base">{t.lead}</p>
+        <p className="mt-3.5 text-zinc-400 max-w-[64ch] text-[17px]">{t.lead}</p>
 
         <div className="grid gap-3.5 mt-7">
           {t.rows.map((row, i) => (
@@ -29,7 +29,7 @@ export function PaymentTerms({ lang }: Props) {
             >
               <div className="flex-none w-full sm:w-[172px]">
                 <span
-                  className={`inline-block font-medium text-xs rounded-full px-3 py-1 mb-2 ${
+                  className={`inline-block font-medium text-[13px] rounded-full px-3 py-1 mb-2 ${
                     row.soft
                       ? 'bg-white/[0.04] text-zinc-300 border border-white/10'
                       : 'bg-white text-zinc-950'
@@ -37,13 +37,13 @@ export function PaymentTerms({ lang }: Props) {
                 >
                   {row.wtag}
                 </span>
-                <small className="block text-xs text-zinc-500 font-mono">{row.small}</small>
+                <small className="block text-[13px] text-zinc-500 font-mono">{row.small}</small>
               </div>
               <div className="flex-1 min-w-0">
-                <b className="font-sora font-semibold text-base text-white block mb-1">
+                <b className="font-sora font-semibold text-[17px] text-white block mb-1">
                   {row.name}
                 </b>
-                <p className="text-sm text-zinc-400 leading-relaxed">{row.desc}</p>
+                <p className="text-[15px] text-zinc-400 leading-relaxed">{row.desc}</p>
               </div>
             </div>
           ))}
@@ -53,7 +53,7 @@ export function PaymentTerms({ lang }: Props) {
           {notes.map((n, i) => (
             <span
               key={i}
-              className="inline-flex items-center gap-2 text-xs text-zinc-300 bg-white/[0.03] border border-white/10 rounded-full px-3.5 py-1.5"
+              className="inline-flex items-center gap-2 text-[13px] text-zinc-300 bg-white/[0.03] border border-white/10 rounded-full px-3.5 py-1.5"
             >
               {n}
             </span>

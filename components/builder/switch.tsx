@@ -29,7 +29,7 @@ export function Switch({ checked, onChange, label }: Props) {
           />
         </span>
       </span>
-      <span className={`text-sm transition-colors ${checked ? 'text-white' : 'text-zinc-400'}`}>
+      <span className={`text-[15px] transition-colors ${checked ? 'text-white' : 'text-zinc-400'}`}>
         {label}
       </span>
     </label>

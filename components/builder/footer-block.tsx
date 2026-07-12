@@ -15,13 +15,13 @@ export function FooterBlock({ lang }: Props) {
           <div className="max-w-[46ch]">
             <div className="flex items-center gap-2 mb-3">
               <DevyaMark size={24} className="text-white" />
-              <span className="font-sora font-semibold tracking-[0.18em] text-white text-base uppercase">
+              <span className="font-sora font-semibold tracking-[0.18em] text-white text-[17px] uppercase">
                 Devya
               </span>
             </div>
-            <p className="text-sm text-zinc-400 leading-relaxed">{t.tagline}</p>
+            <p className="text-[15px] text-zinc-400 leading-relaxed">{t.tagline}</p>
           </div>
-          <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-zinc-300">
+          <nav className="flex flex-wrap gap-x-5 gap-y-2 text-[15px] text-zinc-300">
             <a
               href="https://devya.dev"
               target="_blank"
@@ -64,7 +64,7 @@ export function FooterBlock({ lang }: Props) {
             </a>
           </nav>
         </div>
-        <div className="mt-5 pt-4 border-t border-white/5 text-xs text-zinc-500 font-mono flex flex-wrap gap-3 justify-between">
+        <div className="mt-5 pt-4 border-t border-white/5 text-[13px] text-zinc-500 font-mono flex flex-wrap gap-3 justify-between">
           <span>{t.copy}</span>
           <span>{t.doc}</span>
         </div>
