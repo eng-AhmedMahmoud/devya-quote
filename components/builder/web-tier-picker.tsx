@@ -2,10 +2,10 @@
 
 import { Check } from 'lucide-react';
 import type { Lang, MessagesShape } from '@/lib/messages';
+import { CurrencyGlyph } from '@/components/ui/currency-glyph';
 import {
-  currencySymbol,
   WEB_TIERS,
-  tierFxLabel,
+  tierFxAmount,
   tierUsdLabel,
   type CurrencyCode,
   type WebTierId,
@@ -22,7 +22,7 @@ interface Props {
 
 export function WebTierPicker({ value, onChange, currency, lang, dict, rates }: Props) {
   const isAr = lang === 'ar';
-  const symbol = currencySymbol(currency, isAr);
+  const glyph = <CurrencyGlyph code={currency} isAr={isAr} />;
   const rate = rates[currency];
 
   return (
@@ -74,7 +74,7 @@ export function WebTierPicker({ value, onChange, currency, lang, dict, rates }: 
                       {tierUsdLabel(tier, dict.from)}
                     </span>
                     <span className="block font-mono text-[12px] text-zinc-500 mt-1 whitespace-nowrap">
-                      {dict.approx} {tierFxLabel(tier, rate, dict.from, symbol)}
+                      {dict.approx} {tierFxAmount(tier, rate, dict.from)} {glyph}
                     </span>
                   </span>
                 </div>

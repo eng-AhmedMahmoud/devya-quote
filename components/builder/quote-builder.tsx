@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { DevyaMark } from '@/components/ui/devya-logo';
+import { CurrencyGlyph } from '@/components/ui/currency-glyph';
 import { MESSAGES, type Lang } from '@/lib/messages';
 import {
   DEFAULT_CURRENCY,
@@ -57,8 +58,11 @@ export function QuoteBuilder() {
   const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
   const fxRate = fx.rates[displayCurrency];
   const fxSymbol = currencySymbol(displayCurrency, isRtl);
+  const glyph = <CurrencyGlyph code={displayCurrency} isAr={isRtl} />;
   // EGP-native retainer amounts rendered in the selected display currency
-  const money = (egp: number) => `${fmtFx(egpTo(egp, fx.rates, displayCurrency))} ${fxSymbol}`;
+  const money = (egp: number): ReactNode => (
+    <>{fmtFx(egpTo(egp, fx.rates, displayCurrency))} {glyph}</>
+  );
 
   // Lines shown next to each service-card head
   const lineDesigns = state.designs > 0 ? money(c.designs) : zero;
@@ -159,7 +163,7 @@ export function QuoteBuilder() {
                     <span>
                       {dict.qtyUnit.designs} ·{' '}
                       <span className="font-mono text-zinc-300">{designUnitDisplay}</span>{' '}
-                      {fxSymbol} {dict.services.designs.unit}
+                      {glyph} {dict.services.designs.unit}
                     </span>
                   }
                 />
@@ -181,7 +185,7 @@ export function QuoteBuilder() {
                     <span>
                       {dict.qtyUnit.videos} ·{' '}
                       <span className="font-mono text-zinc-300">{videoUnitDisplay}</span>{' '}
-                      {fxSymbol} {dict.services.videos.unit}
+                      {glyph} {dict.services.videos.unit}
                     </span>
                   }
                 />

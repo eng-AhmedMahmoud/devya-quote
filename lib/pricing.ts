@@ -119,6 +119,14 @@ export function tierFxLabel(t: WebTier, rate: number, fromWord: string, symbol: 
     : `${min} – ${fmtFx(convertUsd(t.usdMax, rate))} ${symbol}`;
 }
 
+/** Like tierFxLabel but without the currency mark — UI appends a CurrencyGlyph instead. */
+export function tierFxAmount(t: WebTier, rate: number, fromWord: string): string {
+  const min = fmtFx(convertUsd(t.usdMin, rate));
+  return t.usdMax === null
+    ? `${fromWord} ${min}`
+    : `${min} – ${fmtFx(convertUsd(t.usdMax, rate))}`;
+}
+
 export type QuoteState = {
   designs: number;
   videos: number;

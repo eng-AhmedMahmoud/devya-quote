@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Printer, ExternalLink, FileDown } from 'lucide-react';
+import { CurrencyGlyph } from '@/components/ui/currency-glyph';
 import type { Lang } from '@/lib/messages';
 import { MESSAGES } from '@/lib/messages';
 import {
@@ -13,7 +14,7 @@ import {
   fmt,
   fmtFx,
   getWebTier,
-  tierFxLabel,
+  tierFxAmount,
   tierUsdLabel,
   type CurrencyCode,
   type QuoteState,
@@ -41,7 +42,7 @@ function Row({
 }: {
   name: string;
   sub?: string;
-  val: string;
+  val: ReactNode;
   variant?: 'normal' | 'sub' | 'mgmt';
 }) {
   const isSub = variant === 'sub';
@@ -83,8 +84,11 @@ export function InvoicePanel({ state, lang, fxRates }: Props) {
   const fxRate = fxRates[displayCurrency];
   const fxSymbol = currencySymbol(displayCurrency, lang === 'ar');
   const isEgp = displayCurrency === 'EGP';
+  const glyph = <CurrencyGlyph code={displayCurrency} isAr={lang === 'ar'} />;
   // Retainer amounts are EGP-native; render them in the selected display currency
-  const money = (egp: number) => `${fmtFx(egpTo(egp, fxRates, displayCurrency))} ${fxSymbol}`;
+  const money = (egp: number): ReactNode => (
+    <>{fmtFx(egpTo(egp, fxRates, displayCurrency))} {glyph}</>
+  );
   const unitOf = (egp: number) => fmtFx(egpTo(egp, fxRates, displayCurrency));
 
   function handlePrintPreview() {
@@ -190,7 +194,7 @@ export function InvoicePanel({ state, lang, fxRates }: Props) {
           <div className="flex items-baseline justify-between gap-3 mt-1">
             <span className="text-[13px] text-zinc-500">{w.tiers[webTier.id].name}</span>
             <span className="font-mono text-[13px] text-zinc-400 whitespace-nowrap">
-              {w.approx} {tierFxLabel(webTier, fxRate, w.from, fxSymbol)}
+              {w.approx} {tierFxAmount(webTier, fxRate, w.from)} {glyph}
             </span>
           </div>
           <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">{t.webProjectNote}</p>
