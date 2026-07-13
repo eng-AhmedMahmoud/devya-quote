@@ -6,15 +6,16 @@ import { DevyaMark } from '@/components/ui/devya-logo';
 import { CurrencyGlyph } from '@/components/ui/currency-glyph';
 import { MESSAGES, type Lang } from '@/lib/messages';
 import {
-  DEFAULT_CURRENCY,
   calc,
   currencySymbol,
   egpTo,
   fmtFx,
   getWebTier,
-  tierUsdLabel,
+  tierRegionAmount,
   type QuoteState,
 } from '@/lib/pricing';
+import { decodeQuoteState } from '@/lib/quote-ref';
+import { REGIONS, type Region } from '@/lib/region';
 import { useUsdRates } from '@/lib/use-fx';
 import { LangToggle } from './lang-toggle';
 import { Stepper } from './stepper';
@@ -28,17 +29,37 @@ import { FooterBlock } from './footer-block';
 import { WebTierPicker } from './web-tier-picker';
 import { CurrencyPicker } from './currency-picker';
 
-export function QuoteBuilder() {
-  const [lang, setLang] = useState<Lang>('ar');
-  const [state, setState] = useState<QuoteState>({
-    designs: 20,
-    videos: 8,
-    content: true,
-    adsOn: true,
-    adBudget: 30000,
-    web: false,
-    webTier: null,
-    currency: DEFAULT_CURRENCY,
+export function QuoteBuilder({
+  region,
+  initialStateB64 = null,
+  initialLang = null,
+}: {
+  region: Region;
+  /** base64 quote state from a share link (?s=) — restores a client's saved inquiry */
+  initialStateB64?: string | null;
+  initialLang?: string | null;
+}) {
+  const cfg = REGIONS[region];
+  const [lang, setLang] = useState<Lang>(() =>
+    initialLang && cfg.langs.includes(initialLang as Lang) ? (initialLang as Lang) : cfg.defaultLang,
+  );
+  const [state, setState] = useState<QuoteState>(() => {
+    const base: QuoteState = {
+      designs: 20,
+      videos: 8,
+      content: true,
+      adsOn: true,
+      adBudget: 30000,
+      web: false,
+      webTier: null,
+      currency: cfg.currencies[0],
+    };
+    const restored = decodeQuoteState(initialStateB64);
+    const merged = { ...base, ...(restored || {}) };
+    if (!merged.currency || !cfg.currencies.includes(merged.currency)) {
+      merged.currency = cfg.currencies[0];
+    }
+    return merged;
   });
 
   const dict = useMemo(() => MESSAGES[lang], [lang]);
@@ -55,7 +76,7 @@ export function QuoteBuilder() {
     setState((s) => ({ ...s, [key]: value }));
   }
 
-  const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
+  const displayCurrency = state.currency ?? cfg.currencies[0];
   const fxRate = fx.rates[displayCurrency];
   const fxSymbol = currencySymbol(displayCurrency, isRtl);
   const glyph = <CurrencyGlyph code={displayCurrency} isAr={isRtl} />;
@@ -72,13 +93,22 @@ export function QuoteBuilder() {
   const webTier = getWebTier(state.webTier);
   const lineWeb = state.web
     ? webTier
-      ? tierUsdLabel(webTier, dict.services.web.from)
+      ? (
+          <>
+            {tierRegionAmount(webTier, cfg.upliftUsd[webTier.id], fxRate, dict.services.web.from)}{' '}
+            {glyph}
+          </>
+        )
       : dict.services.web.onDemand
     : dash;
   const fxRateLabel = fxRate < 2 ? fxRate.toFixed(3) : fxRate.toFixed(2);
-  const webHint = fx.live
-    ? dict.services.web.fxNote(fxRateLabel, fxSymbol)
-    : dict.services.web.fxNoteFallback(fxRateLabel, fxSymbol);
+  // Egypt is EGP-only — a "$1 ≈ …" note would surface dollars we deliberately hide.
+  const webHint =
+    region === 'eg'
+      ? dict.services.web.devOnlyNote
+      : fx.live
+        ? dict.services.web.fxNote(fxRateLabel, fxSymbol)
+        : dict.services.web.fxNoteFallback(fxRateLabel, fxSymbol);
 
   // Dynamic hints
   const designsHint = state.designs > 30
@@ -115,7 +145,7 @@ export function QuoteBuilder() {
             </span>
           </div>
           <div className="flex items-center gap-2.5">
-            <LangToggle lang={lang} onChange={setLang} />
+            {cfg.langs.length > 1 && <LangToggle lang={lang} onChange={setLang} />}
             <a
               href="https://devya.dev"
               target="_blank"
@@ -141,11 +171,14 @@ export function QuoteBuilder() {
               </span>
 
               {/* Display currency — converts the whole quote, retainer and web tiers alike */}
-              <CurrencyPicker
-                value={displayCurrency}
-                onChange={(code) => patch('currency', code)}
-                label={dict.services.web.currencyLabel}
-              />
+              {cfg.currencies.length > 1 && (
+                <CurrencyPicker
+                  value={displayCurrency}
+                  onChange={(code) => patch('currency', code)}
+                  label={dict.services.web.currencyLabel}
+                  currencies={cfg.currencies}
+                />
+              )}
 
               {/* Designs */}
               <ServiceCard
@@ -249,6 +282,7 @@ export function QuoteBuilder() {
                     lang={lang}
                     dict={dict.services.web}
                     rates={fx.rates}
+                    regionCfg={cfg}
                   />
                 </div>
               </ServiceCard>
@@ -259,7 +293,13 @@ export function QuoteBuilder() {
               <span className="block font-medium text-[14px] text-zinc-500 tracking-wide mb-4">
                 {dict.invoice.aside}
               </span>
-              <InvoicePanel state={state} lang={lang} defaultAdBudget={30000} fxRates={fx.rates} />
+              <InvoicePanel
+                state={state}
+                lang={lang}
+                defaultAdBudget={30000}
+                fxRates={fx.rates}
+                regionCfg={cfg}
+              />
             </aside>
           </div>
         </section>

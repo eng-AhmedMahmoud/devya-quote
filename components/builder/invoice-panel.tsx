@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import { Printer, ExternalLink, FileDown } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Printer, ExternalLink, Link2 } from 'lucide-react';
 import { CurrencyGlyph } from '@/components/ui/currency-glyph';
 import type { Lang } from '@/lib/messages';
 import { MESSAGES } from '@/lib/messages';
+import { buildShareUrl, encodeQuoteState, quoteRef } from '@/lib/quote-ref';
+import type { RegionConfig } from '@/lib/region';
 import {
-  DEFAULT_CURRENCY,
   PRICE,
   calc,
   currencySymbol,
@@ -14,22 +15,18 @@ import {
   fmt,
   fmtFx,
   getWebTier,
-  tierFxAmount,
-  tierUsdLabel,
+  tierRegionAmount,
+  tierRegionUsdLabel,
   type CurrencyCode,
   type QuoteState,
 } from '@/lib/pricing';
-
-function encodeState(state: QuoteState): string {
-  if (typeof window === 'undefined') return '';
-  return btoa(JSON.stringify(state));
-}
 
 interface Props {
   state: QuoteState;
   lang: Lang;
   defaultAdBudget: number;
   fxRates: Record<CurrencyCode, number>;
+  regionCfg: RegionConfig;
 }
 
 const BOOKING_URL = process.env.NEXT_PUBLIC_BOOKING_URL || 'https://booking.devya.dev';
@@ -72,15 +69,21 @@ function Row({
   );
 }
 
-export function InvoicePanel({ state, lang, fxRates }: Props) {
+export function InvoicePanel({ state, lang, fxRates, regionCfg }: Props) {
   const c = calc(state);
   const t = MESSAGES[lang].invoice;
   const w = MESSAGES[lang].services.web;
-  const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+  }, []);
+
+  const ref = quoteRef(state);
 
   const any = state.designs > 0 || state.videos > 0 || state.content || state.adsOn;
   const webTier = state.web ? getWebTier(state.webTier) : null;
-  const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
+  const displayCurrency = state.currency ?? regionCfg.currencies[0];
   const fxRate = fxRates[displayCurrency];
   const fxSymbol = currencySymbol(displayCurrency, lang === 'ar');
   const isEgp = displayCurrency === 'EGP';
@@ -94,44 +97,42 @@ export function InvoicePanel({ state, lang, fxRates }: Props) {
   function handlePrintPreview() {
     const qs = new URLSearchParams({
       lang,
-      s: encodeState(state),
+      s: encodeQuoteState(state),
       auto: '1',
     });
     window.open(`/preview?${qs.toString()}`, '_blank', 'noopener');
   }
 
-  async function handleDownloadDocx() {
-    setSaving(true);
+  async function handleCopyLink() {
     try {
-      const res = await fetch('/api/export-docx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang, state }),
-      });
-      if (!res.ok) throw new Error('Export failed');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const cd = res.headers.get('content-disposition') || '';
-      const m = cd.match(/filename="?([^"]+)"?/i);
-      a.download = m?.[1] || `devya-quote-${lang}.docx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      await navigator.clipboard.writeText(buildShareUrl(state, lang));
+      setCopied(true);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(false), 2000);
     } catch {
-      handlePrintPreview();
-    } finally {
-      setSaving(false);
+      /* clipboard unavailable — no-op */
     }
   }
+
+  // Carry the inquiry into the booking so the meeting starts from this exact
+  // quote. Set post-hydration — the share URL needs window.location.origin.
+  const [bookHref, setBookHref] = useState(BOOKING_URL);
+  useEffect(() => {
+    const qs = new URLSearchParams({
+      quote_ref: ref,
+      quote_link: buildShareUrl(state, lang),
+    });
+    setBookHref(`${BOOKING_URL}?${qs.toString()}`);
+  }, [state, lang, ref]);
 
   return (
     <div className="surface-strong p-6 shadow-[0_26px_64px_-26px_rgba(0,0,0,0.85)]">
       <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-2">
         <span className="font-sora font-bold text-[19px] text-white">{t.kick}</span>
-        <span className="text-[12px] text-zinc-500 font-medium tracking-wide uppercase">{t.mo}</span>
+        <span className="text-end">
+          <span className="block text-[12px] text-zinc-500 font-medium tracking-wide uppercase">{t.mo}</span>
+          <span className="block font-mono text-[11px] text-zinc-600 mt-0.5">{t.refLabel} · {ref}</span>
+        </span>
       </div>
 
       <div>
@@ -188,16 +189,19 @@ export function InvoicePanel({ state, lang, fxRates }: Props) {
           <div className="flex items-baseline justify-between gap-3">
             <span className="text-[14px] font-semibold text-zinc-200">{t.webProjectTitle}</span>
             <span className="font-mono font-bold text-[16px] text-white whitespace-nowrap">
-              {tierUsdLabel(webTier, w.from)}
+              {tierRegionAmount(webTier, regionCfg.upliftUsd[webTier.id], fxRate, w.from)} {glyph}
             </span>
           </div>
           <div className="flex items-baseline justify-between gap-3 mt-1">
             <span className="text-[13px] text-zinc-500">{w.tiers[webTier.id].name}</span>
-            <span className="font-mono text-[13px] text-zinc-400 whitespace-nowrap">
-              {w.approx} {tierFxAmount(webTier, fxRate, w.from)} {glyph}
-            </span>
+            {regionCfg.showUsdBand && displayCurrency !== 'USD' && (
+              <span className="font-mono text-[13px] text-zinc-400 whitespace-nowrap">
+                {w.approx} {tierRegionUsdLabel(webTier, regionCfg.upliftUsd[webTier.id], w.from)}
+              </span>
+            )}
           </div>
           <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">{t.webProjectNote}</p>
+          <p className="text-[12px] text-zinc-500 mt-1 leading-relaxed">{w.devOnlyNote}</p>
         </div>
       )}
 
@@ -222,16 +226,16 @@ export function InvoicePanel({ state, lang, fxRates }: Props) {
         </button>
         <button
           type="button"
-          onClick={handleDownloadDocx}
-          disabled={saving}
-          className="inline-flex items-center justify-center gap-2 font-medium text-[15px] text-white bg-transparent border border-white/10 rounded-full px-4 py-3 transition hover:bg-white/5 hover:border-white disabled:opacity-60 whitespace-nowrap"
-          aria-label={lang === 'ar' ? 'تحميل Word' : 'Download Word'}
-          title={lang === 'ar' ? 'تحميل ‎.docx' : 'Download .docx'}
+          onClick={handleCopyLink}
+          className="inline-flex items-center justify-center gap-2 font-medium text-[15px] text-white bg-transparent border border-white/10 rounded-full px-4 py-3 transition hover:bg-white/5 hover:border-white whitespace-nowrap"
+          aria-label={t.copyLink}
+          title={t.copyLink}
         >
-          <FileDown className="h-4 w-4" />
+          <Link2 className="h-4 w-4" />
+          <span className="text-[13px]">{copied ? t.copied : ''}</span>
         </button>
         <a
-          href={BOOKING_URL}
+          href={bookHref}
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 inline-flex items-center justify-center gap-2 font-medium text-[15px] text-white bg-transparent border border-white/10 rounded-full px-4 py-3 transition hover:bg-white/5 hover:border-white whitespace-nowrap"

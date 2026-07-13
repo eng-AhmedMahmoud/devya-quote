@@ -3,10 +3,11 @@
 import { Check } from 'lucide-react';
 import type { Lang, MessagesShape } from '@/lib/messages';
 import { CurrencyGlyph } from '@/components/ui/currency-glyph';
+import type { RegionConfig } from '@/lib/region';
 import {
   WEB_TIERS,
-  tierFxAmount,
-  tierUsdLabel,
+  tierRegionAmount,
+  tierRegionUsdLabel,
   type CurrencyCode,
   type WebTierId,
 } from '@/lib/pricing';
@@ -18,9 +19,10 @@ interface Props {
   lang: Lang;
   dict: MessagesShape['services']['web'];
   rates: Record<CurrencyCode, number>;
+  regionCfg: RegionConfig;
 }
 
-export function WebTierPicker({ value, onChange, currency, lang, dict, rates }: Props) {
+export function WebTierPicker({ value, onChange, currency, lang, dict, rates, regionCfg }: Props) {
   const isAr = lang === 'ar';
   const glyph = <CurrencyGlyph code={currency} isAr={isAr} />;
   const rate = rates[currency];
@@ -49,7 +51,7 @@ export function WebTierPicker({ value, onChange, currency, lang, dict, rates }: 
                     : 'border-white/10 bg-white/[0.02] hover:border-white/25'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                   <div className="flex items-start gap-2.5 min-w-0">
                     <span
                       aria-hidden
@@ -69,13 +71,15 @@ export function WebTierPicker({ value, onChange, currency, lang, dict, rates }: 
                       <span className="block text-[12px] text-zinc-600 mt-1">{copy.who}</span>
                     </span>
                   </div>
-                  <span className="flex-none text-end">
+                  <span className="flex-none ps-[26px] text-start sm:ps-0 sm:text-end">
                     <span className={`block font-mono font-bold text-[15px] whitespace-nowrap ${selected ? 'text-white' : 'text-zinc-200'}`}>
-                      {tierUsdLabel(tier, dict.from)}
+                      {tierRegionAmount(tier, regionCfg.upliftUsd[tier.id], rate, dict.from)} {glyph}
                     </span>
-                    <span className="block font-mono text-[12px] text-zinc-500 mt-1 whitespace-nowrap">
-                      {dict.approx} {tierFxAmount(tier, rate, dict.from)} {glyph}
-                    </span>
+                    {regionCfg.showUsdBand && currency !== 'USD' && (
+                      <span className="block font-mono text-[12px] text-zinc-500 mt-1 whitespace-nowrap">
+                        {dict.approx} {tierRegionUsdLabel(tier, regionCfg.upliftUsd[tier.id], dict.from)}
+                      </span>
+                    )}
                   </span>
                 </div>
               </button>
@@ -107,6 +111,9 @@ export function WebTierPicker({ value, onChange, currency, lang, dict, rates }: 
             </div>
           </button>
         </div>
+
+        {/* Scope guard — dev effort only, no third-party running costs */}
+        <p className="text-[12px] text-zinc-500 mt-3 leading-relaxed">{dict.devOnlyNote}</p>
       </div>
     </div>
   );

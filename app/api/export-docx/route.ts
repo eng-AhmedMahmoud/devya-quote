@@ -17,8 +17,10 @@ import {
   makeTotalsBlock,
 } from '@/lib/docx/builders';
 import { getUsdRates } from '@/lib/fx';
-import { webFxFor } from '@/lib/docx/builders';
+import { makeDevSection, makeRefLine, webFxFor } from '@/lib/docx/builders';
 import { CURRENCIES, calc, WEB_TIERS, type QuoteState } from '@/lib/pricing';
+import { quoteRef } from '@/lib/quote-ref';
+import { REGIONS, resolveRegion } from '@/lib/region';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -146,7 +148,10 @@ export async function POST(req: Request) {
   // Daily USD→currency rates for the web-project rows; cached upstream, so
   // this is effectively free on repeat exports.
   const { rates } = await getUsdRates();
-  const webFx = webFxFor(state, rates, isAr);
+  const region = resolveRegion(req.headers.get('host'));
+  const cfg = REGIONS[region];
+  const webFx = webFxFor(state, rates, isAr, cfg);
+  const ref = quoteRef(state);
 
   // Prefer the company name on the cover when both are provided — feels more
   // formal on a quote.  Fall back to person, then to a blank cover.
@@ -161,7 +166,7 @@ export async function POST(req: Request) {
 
   const servicesHeading = makeSectionHeading(
     isAr,
-    isAr ? 'الخدمات والتسعير' : 'Services & pricing',
+    isAr ? 'التسويق — الاشتراك الشهري' : 'Marketing — monthly retainer',
   );
   const totalsHeading = makeSectionHeading(
     isAr,
@@ -194,10 +199,12 @@ export async function POST(req: Request) {
         children: [
           ...makeCover(isAr, today),
           ...makeParty(isAr),
+          makeRefLine(isAr, ref),
           servicesHeading,
-          makeServicesTable(isAr, state, c, webFx),
+          makeServicesTable(isAr, state, c),
+          ...makeDevSection(isAr, state, cfg, webFx),
           totalsHeading,
-          makeTotalsBlock(isAr, c, state, webFx),
+          makeTotalsBlock(isAr, c, state, webFx, cfg),
           ...makePaymentTermsTable(isAr),
         ],
       },

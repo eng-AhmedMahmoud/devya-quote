@@ -4,17 +4,18 @@ import { DEVYA_PARTY } from '@/lib/devya-party';
 import { DevyaMark } from '@/components/ui/devya-logo';
 import { MESSAGES, type Lang } from '@/lib/messages';
 import {
-  DEFAULT_CURRENCY,
   FALLBACK_USD_RATES,
   calc,
   currencySymbol,
   fmt,
   getWebTier,
-  tierFxLabel,
-  tierUsdLabel,
+  tierRegionAmount,
+  tierRegionUsdLabel,
   type CurrencyCode,
   type QuoteState,
 } from '@/lib/pricing';
+import { quoteRef } from '@/lib/quote-ref';
+import { REGIONS, type Region } from '@/lib/region';
 
 const dict = {
   en: {
@@ -37,6 +38,9 @@ const dict = {
     sec2: 'Investment summary',
     sec3: 'Payment plan',
     sec4: 'Terms & notes',
+    marketingHeading: 'Marketing — monthly retainer',
+    devHeading: 'Development — one-off project',
+    refLabel: 'Quote ref',
     services: 'Services',
     qty: 'Qty',
     unit: 'Unit price',
@@ -95,6 +99,9 @@ const dict = {
     sec2: 'ملخّص العرض المالي',
     sec3: 'خطة الدفع',
     sec4: 'ملاحظات وبنود',
+    marketingHeading: 'التسويق — الاشتراك الشهري',
+    devHeading: 'التطوير — مشروع لمرّة واحدة',
+    refLabel: 'مرجع العرض',
     services: 'الخدمة',
     qty: 'الكمية',
     unit: 'سعر الوحدة',
@@ -141,6 +148,7 @@ interface Props {
   date?: string; // YYYY-MM-DD
   /** Daily USD→currency rates for web-project tiers (from /api/fx) */
   fxRates?: Record<CurrencyCode, number>;
+  region?: Region;
 }
 
 function todayLocal(): string {
@@ -160,20 +168,26 @@ function formatDateLocal(iso: string, lang: Lang): string {
   }).format(date);
 }
 
-export function QuoteDocumentPreview({ state, lang, date, fxRates }: Props) {
+export function QuoteDocumentPreview({ state, lang, date, fxRates, region = 'eg' }: Props) {
   const isAr = lang === 'ar';
   const d = dict[lang];
   const c = calc(state);
-  const displayCurrency = state.currency ?? DEFAULT_CURRENCY;
+  const cfg = REGIONS[region];
+  const displayCurrency =
+    state.currency && cfg.currencies.includes(state.currency)
+      ? state.currency
+      : cfg.currencies[0];
   const rate = fxRates?.[displayCurrency] ?? FALLBACK_USD_RATES[displayCurrency];
   const fxSymbol = currencySymbol(displayCurrency, isAr);
   const webTier = state.web ? getWebTier(state.webTier) : null;
+  const uplift = webTier ? cfg.upliftUsd[webTier.id] : 0;
+  const showUsd = cfg.showUsdBand && displayCurrency !== 'USD';
   const w = MESSAGES[lang].services.web;
+  const ref = quoteRef(state);
   const today = date || todayLocal();
   const niceDate = formatDateLocal(today, lang);
   const year = today.slice(0, 4);
   const currency = isAr ? 'ج.م' : 'EGP';
-  const dash = '—';
   const totalPages = 4; // 01 services, 02 investment, 03 payments, 04 notes
 
   const sections: { kicker: string; render: () => React.ReactNode }[] = [
@@ -187,7 +201,8 @@ export function QuoteDocumentPreview({ state, lang, date, fxRates }: Props) {
     return (
       <>
         <h2>{d.sec1}</h2>
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12 }}>
+        <h3 style={{ marginTop: 14 }}>{d.marketingHeading}</h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
           <thead>
             <tr>
               <th style={th(isAr)}>{d.services}</th>
@@ -241,19 +256,52 @@ export function QuoteDocumentPreview({ state, lang, date, fxRates }: Props) {
                 lineVal={`${fmt(c.adEff)} ${currency}`}
               />
             )}
-            {state.web && (
-              <Row
-                isAr={isAr}
-                zebra={4}
-                name={webTier ? `${d.web} — ${w.tiers[webTier.id].name}` : d.web}
-                note={webTier ? `${w.tiers[webTier.id].desc} ${MESSAGES[lang].invoice.webProjectNote}` : d.webNote}
-                qty={dash}
-                unitVal={webTier ? `${w.approx} ${tierFxLabel(webTier, rate, w.from, fxSymbol)}` : dash}
-                lineVal={webTier ? tierUsdLabel(webTier, w.from) : dash}
-              />
-            )}
           </tbody>
         </table>
+
+        {state.web && (
+          <>
+            <h3 style={{ marginTop: 18 }}>{d.devHeading}</h3>
+            <div
+              style={{
+                border: '1px solid #e4e4e7',
+                borderRadius: 4,
+                padding: '12pt 14pt',
+                background: '#fafaf9',
+                marginTop: 8,
+              }}
+            >
+              {webTier ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ minWidth: 260, flex: 1 }}>
+                    <strong style={{ fontSize: '11.5pt' }}>{w.tiers[webTier.id].name}</strong>
+                    <p style={{ fontSize: '10pt', color: '#3f3f46', marginTop: 4, lineHeight: 1.6 }}>
+                      {w.tiers[webTier.id].desc}
+                    </p>
+                    <p style={{ fontSize: '9pt', color: '#71717a', margin: 0 }}>
+                      {w.tiers[webTier.id].who}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: isAr ? 'left' : 'right', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: '14pt', fontWeight: 700, fontFamily: 'ui-monospace, Menlo, monospace' }}>
+                      {tierRegionAmount(webTier, uplift, rate, w.from)} {fxSymbol}
+                    </div>
+                    {showUsd && (
+                      <div style={{ fontSize: '9.5pt', color: '#71717a', marginTop: 3, fontFamily: 'ui-monospace, Menlo, monospace' }}>
+                        {w.approx} {tierRegionUsdLabel(webTier, uplift, w.from)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p style={{ fontSize: '10pt', color: '#3f3f46', margin: 0, lineHeight: 1.6 }}>{d.webNote}</p>
+              )}
+              <p style={{ fontSize: '9pt', color: '#71717a', marginTop: 8, marginBottom: 0, lineHeight: 1.6 }}>
+                {MESSAGES[lang].invoice.webProjectNote} {w.devOnlyNote}
+              </p>
+            </div>
+          </>
+        )}
       </>
     );
   }
@@ -294,14 +342,16 @@ export function QuoteDocumentPreview({ state, lang, date, fxRates }: Props) {
                 <td style={tdLabel(isAr)}>
                   <strong>{MESSAGES[lang].invoice.webProjectTitle}</strong>
                   <div style={{ fontSize: '9pt', color: '#71717a', marginTop: 2 }}>
-                    {w.tiers[webTier.id].name} — {MESSAGES[lang].invoice.webProjectNote}
+                    {w.tiers[webTier.id].name} — {MESSAGES[lang].invoice.webProjectNote} {w.devOnlyNote}
                   </div>
                 </td>
                 <td style={tdVal(isAr)}>
-                  <strong>{tierUsdLabel(webTier, w.from)}</strong>
-                  <div style={{ fontSize: '9pt', color: '#71717a', marginTop: 2 }}>
-                    {w.approx} {tierFxLabel(webTier, rate, w.from, fxSymbol)}
-                  </div>
+                  <strong>{tierRegionAmount(webTier, uplift, rate, w.from)} {fxSymbol}</strong>
+                  {showUsd && (
+                    <div style={{ fontSize: '9pt', color: '#71717a', marginTop: 2 }}>
+                      {w.approx} {tierRegionUsdLabel(webTier, uplift, w.from)}
+                    </div>
+                  )}
                 </td>
               </tr>
             </tbody>
@@ -368,6 +418,10 @@ export function QuoteDocumentPreview({ state, lang, date, fxRates }: Props) {
           {d.notes.map((n, i) => (
             <li key={i} style={{ marginBottom: 8, lineHeight: 1.7 }}>{n}</li>
           ))}
+          <li style={{ marginBottom: 8, lineHeight: 1.7 }}>{w.devOnlyNote}</li>
+          <li style={{ marginBottom: 8, lineHeight: 1.7 }}>
+            <strong>{d.refLabel}:</strong> {ref}
+          </li>
         </ul>
       </>
     );
@@ -413,6 +467,7 @@ export function QuoteDocumentPreview({ state, lang, date, fxRates }: Props) {
               <span><strong>{d.booking}</strong> · {DEVYA_PARTY.bookingLabel}</span>
               <span><strong>{d.quoteLink}</strong> · {DEVYA_PARTY.quoteLabel}</span>
               <span><strong>{d.date}</strong> · {niceDate}</span>
+              <span><strong>{d.refLabel}</strong> · {ref}</span>
             </div>
             <div className="cover-year">{year}</div>
           </div>

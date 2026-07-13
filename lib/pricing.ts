@@ -41,11 +41,12 @@ export function getWebTier(id: WebTierId | null | undefined): WebTier | null {
  * USD is the pricing base and is always shown; these are the equivalents.
  */
 export type CurrencyCode =
-  | 'EGP' | 'SAR' | 'AED' | 'QAR' | 'KWD' | 'BHD' | 'OMR' | 'JOD' | 'EUR';
+  | 'USD' | 'EGP' | 'SAR' | 'AED' | 'QAR' | 'KWD' | 'BHD' | 'OMR' | 'JOD' | 'EUR';
 
 export type Currency = { code: CurrencyCode; en: string; ar: string };
 
 export const CURRENCIES: Currency[] = [
+  { code: 'USD', en: '$', ar: '$' },
   { code: 'EGP', en: 'EGP', ar: 'ج.م' },
   { code: 'SAR', en: 'SAR', ar: 'ر.س' },
   { code: 'AED', en: 'AED', ar: 'د.إ' },
@@ -70,6 +71,7 @@ export function currencySymbol(code: CurrencyCode, isAr: boolean): string {
  * EGP/EUR floats are refreshed by /api/fx anyway.
  */
 export const FALLBACK_USD_RATES: Record<CurrencyCode, number> = {
+  USD: 1,
   EGP: 48.17,
   SAR: 3.75,
   AED: 3.6725,
@@ -125,6 +127,44 @@ export function tierFxAmount(t: WebTier, rate: number, fromWord: string): string
   return t.usdMax === null
     ? `${fromWord} ${min}`
     : `${min} – ${fmtFx(convertUsd(t.usdMax, rate))}`;
+}
+
+/**
+ * Round a converted price to the nearest "solid" number for clean quoting —
+ * 9,923 EGP → 10,000; 1,125 SAR → 1,100; 62.5 KWD → 65.
+ */
+export function niceRound(v: number): number {
+  if (v >= 5000) return Math.round(v / 1000) * 1000;
+  if (v >= 1000) return Math.round(v / 100) * 100;
+  if (v >= 100) return Math.round(v / 50) * 50;
+  return Math.round(v / 5) * 5;
+}
+
+/** Uplifted USD bounds for a tier (regional uplift applied before conversion). */
+export function tierUsdBounds(t: WebTier, upliftUsd: number): { min: number; max: number | null } {
+  return { min: t.usdMin + upliftUsd, max: t.usdMax === null ? null : t.usdMax + upliftUsd };
+}
+
+/** Region-priced tier band in a display currency: uplift → convert → solid rounding. */
+export function tierRegionAmount(
+  t: WebTier,
+  upliftUsd: number,
+  rate: number,
+  fromWord: string,
+): string {
+  const b = tierUsdBounds(t, upliftUsd);
+  const min = fmtFx(niceRound(convertUsd(b.min, rate)));
+  return b.max === null
+    ? `${fromWord} ${min}`
+    : `${min} – ${fmtFx(niceRound(convertUsd(b.max, rate)))}`;
+}
+
+/** Uplifted USD band label ("$400 – $650" / "from $2,200"). */
+export function tierRegionUsdLabel(t: WebTier, upliftUsd: number, fromWord: string): string {
+  const b = tierUsdBounds(t, upliftUsd);
+  return b.max === null
+    ? `${fromWord} $${fmt(b.min)}`
+    : `$${fmt(b.min)} – $${fmt(b.max)}`;
 }
 
 export type QuoteState = {

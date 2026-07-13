@@ -42,6 +42,7 @@ export type MessagesShape = {
       from: string;
       approx: string;
       currencyLabel: string;
+      devOnlyNote: string;
       tiers: Record<WebTierId, WebTierCopy>;
       fxNote: (rate: string, symbol: string) => string;
       fxNoteFallback: (rate: string, symbol: string) => string;
@@ -76,6 +77,9 @@ export type MessagesShape = {
     webProjectTitle: string;
     webProjectNote: string;
     fxDisplayNote: (symbol: string) => string;
+    refLabel: string;
+    copyLink: string;
+    copied: string;
   };
   payRows: {
     eyebrow: string;
@@ -181,6 +185,8 @@ const ar: MessagesShape = {
         },
       },
       currencyLabel: 'اعرض الأسعار بـ',
+      devOnlyNote:
+        'الأسعار تخص جهد التطوير فقط — لا تشمل اشتراكات العميل أو الاستضافة أو تسجيل النطاقات أو أي رسوم لجهات خارجية.',
       fxNote: (rate, symbol) => `التحويل بسعر صرف اليوم: ١ دولار ≈ ${rate} ${symbol} — يُحدَّث يوميًا تلقائيًا.`,
       fxNoteFallback: (rate, symbol) => `تحويل تقريبي: ١ دولار ≈ ${rate} ${symbol} — تعذّر جلب سعر اليوم، يُؤكَّد الرقم النهائي في العرض.`,
     },
@@ -216,6 +222,9 @@ const ar: MessagesShape = {
     webProjectTitle: 'مشروع لمرّة واحدة — تطوير الويب',
     webProjectNote: 'يُسعَّر ويُدفع على دفعات منفصلة عن الاشتراك الشهري (مثلًا ٥٠٪ عند البدء / ٥٠٪ عند التسليم).',
     fxDisplayNote: (symbol) => `الأسعار معروضة بـ${symbol} بسعر صرف اليوم للتوضيح — الفوترة الفعلية بالجنيه المصري.`,
+    refLabel: 'مرجع العرض',
+    copyLink: 'انسخ رابط العرض',
+    copied: 'تم النسخ ✓',
   },
   payRows: {
     eyebrow: 'مواعيد الدفع',
@@ -366,6 +375,8 @@ const en: MessagesShape = {
         },
       },
       currencyLabel: 'Show prices in',
+      devOnlyNote:
+        'Prices cover development effort only — client subscriptions, hosting, and domain registration are not included.',
       fxNote: (rate, symbol) => `Converted at today’s rate: $1 ≈ ${rate} ${symbol} — refreshed daily, automatically.`,
       fxNoteFallback: (rate, symbol) => `Approximate conversion: $1 ≈ ${rate} ${symbol} — live rate unavailable; final figure confirmed on the quote.`,
     },
@@ -401,6 +412,9 @@ const en: MessagesShape = {
     webProjectTitle: 'One-off project — web development',
     webProjectNote: 'Priced and paid in milestones, separately from the monthly retainer (e.g. 50% kickoff / 50% on delivery).',
     fxDisplayNote: (symbol) => `Prices shown in ${symbol} at today's rate for clarity — actual billing is in EGP.`,
+    refLabel: 'Quote ref',
+    copyLink: 'Copy quote link',
+    copied: 'Copied ✓',
   },
   payRows: {
     eyebrow: 'Payment schedule',

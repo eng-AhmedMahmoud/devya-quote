@@ -29,29 +29,36 @@ import {
 import { COLORS, FONT_AR, FONT_LATIN } from './colors';
 import { DEVYA_PARTY } from '@/lib/devya-party';
 import { MESSAGES } from '@/lib/messages';
+import type { RegionConfig } from '@/lib/region';
 import {
-  DEFAULT_CURRENCY,
   FALLBACK_USD_RATES,
   calc,
   currencySymbol,
   getWebTier,
   PRICE,
-  tierFxLabel,
-  tierUsdLabel,
+  tierRegionAmount,
+  tierRegionUsdLabel,
   type CurrencyCode,
   type QuoteState,
 } from '@/lib/pricing';
 
-/** Resolve the web-tier display rate + symbol for a given quote state. */
+export type WebFx = { rate: number; symbol: string; showUsd: boolean };
+
+/** Resolve the web-tier display rate + symbol for a quote state within its region. */
 export function webFxFor(
   state: QuoteState,
   rates: Record<CurrencyCode, number>,
   isAr: boolean,
-): { rate: number; symbol: string } {
-  const code = state.currency ?? DEFAULT_CURRENCY;
+  cfg: RegionConfig,
+): WebFx {
+  const code =
+    state.currency && cfg.currencies.includes(state.currency)
+      ? state.currency
+      : cfg.currencies[0];
   return {
     rate: rates[code] ?? FALLBACK_USD_RATES[code],
     symbol: currencySymbol(code, isAr),
+    showUsd: cfg.showUsdBand && code !== 'USD',
   };
 }
 
@@ -495,7 +502,6 @@ export function makeServicesTable(
   isAr: boolean,
   state: QuoteState,
   c: ReturnType<typeof calc>,
-  fx: { rate: number; symbol: string } = { rate: FALLBACK_USD_RATES.EGP, symbol: currencySymbol('EGP', isAr) },
 ): Table {
   const lbl = isAr
     ? {
@@ -617,48 +623,9 @@ export function makeServicesTable(
     );
   });
 
-  // Web add-on — a one-off project outside the monthly totals. With a tier
-  // selected it carries a USD band plus the day's EGP equivalent; without one
-  // it stays the classic "on demand" note line.
-  if (state.web) {
-    const zebra = rows.length % 2 === 1 ? 'F4F4F5' : 'FFFFFF';
-    const tier = getWebTier(state.webTier);
-    const tierCopy = tier ? MESSAGES[isAr ? 'ar' : 'en'].services.web.tiers[tier.id] : null;
-    const fromWord = isAr ? 'من' : 'from';
-    const heading = tierCopy ? `${lbl.webHeading} — ${tierCopy.name}` : lbl.webHeading;
-    const note = tierCopy ? `${tierCopy.desc} ${lbl.webNoteTier}` : lbl.webNote;
-    const unitText = tier ? `≈ ${tierFxLabel(tier, fx.rate, fromWord, fx.symbol)}` : '—';
-    const lineText = tier ? tierUsdLabel(tier, fromWord) : '—';
-    tableRows.push(
-      new TableRow({
-        children: [
-          bodyCell(
-            [
-              textP(isAr, heading, {
-                bold: true,
-                size: 22,
-                color: COLORS.ink,
-              }),
-              textP(isAr, note, { size: 16, color: COLORS.zinc600 }),
-            ],
-            46,
-            zebra,
-          ),
-          bodyCell([textP(isAr, '—', { size: 20, color: COLORS.zinc500 })], 12, zebra),
-          bodyCell([textP(isAr, unitText, { size: 18, color: tier ? COLORS.zinc700 : COLORS.zinc500 })], 21, zebra),
-          bodyCell(
-            [textP(isAr, lineText, tier ? { bold: true, size: 22, color: COLORS.ink } : { size: 18, color: COLORS.zinc500 })],
-            21,
-            zebra,
-          ),
-        ],
-      }),
-    );
-  }
-
   // Empty-state safety: if nothing is selected, render a single info row so
   // the document still produces a valid Word table (docx throws on empty rows).
-  if (rows.length === 0 && !state.web) {
+  if (rows.length === 0) {
     tableRows.push(
       new TableRow({
         children: [
@@ -691,6 +658,87 @@ export function makeServicesTable(
 }
 
 /* ----------------------------------------------------------------- */
+/* Development section — one-off project, separated from marketing    */
+/* ----------------------------------------------------------------- */
+
+export function makeDevSection(
+  isAr: boolean,
+  state: QuoteState,
+  cfg: RegionConfig,
+  fx: WebFx,
+): Array<Paragraph | Table> {
+  if (!state.web) return [];
+  const m = MESSAGES[isAr ? 'ar' : 'en'];
+  const w = m.services.web;
+  const tier = getWebTier(state.webTier);
+  const fromWord = isAr ? 'من' : 'from';
+
+  const heading = makeSectionHeading(
+    isAr,
+    isAr ? 'التطوير — مشروع لمرّة واحدة' : 'Development — one-off project',
+  );
+
+  const label: Paragraph[] = tier
+    ? [
+        textP(isAr, w.tiers[tier.id].name, { bold: true, size: 22, color: COLORS.ink }),
+        textP(isAr, w.tiers[tier.id].desc, { size: 16, color: COLORS.zinc600 }),
+        textP(isAr, w.tiers[tier.id].who, { size: 14, color: COLORS.zinc500 }),
+      ]
+    : [
+        textP(
+          isAr,
+          isAr
+            ? 'يُحدَّد النطاق والسعر في اجتماع تحديد المتطلبات.'
+            : 'Scope and price are agreed on a discovery call.',
+          { size: 18, color: COLORS.zinc600 },
+        ),
+      ];
+
+  const value: Paragraph[] = tier
+    ? [
+        textP(isAr, `${tierRegionAmount(tier, cfg.upliftUsd[tier.id], fx.rate, fromWord)} ${fx.symbol}`, {
+          bold: true,
+          size: 24,
+          color: COLORS.ink,
+        }),
+        ...(fx.showUsd
+          ? [
+              textP(isAr, `≈ ${tierRegionUsdLabel(tier, cfg.upliftUsd[tier.id], fromWord)}`, {
+                size: 16,
+                color: COLORS.zinc600,
+              }),
+            ]
+          : []),
+      ]
+    : [textP(isAr, isAr ? 'حسب الطلب' : 'On demand', { size: 20, color: COLORS.zinc600 })];
+
+  const table = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: tableBorders(COLORS.divider),
+    rows: [
+      new TableRow({
+        children: [bodyCell(label, 64, 'FAFAF9'), bodyCell(value, 36, 'FAFAF9')],
+      }),
+    ],
+  });
+
+  const note = textP(isAr, `${m.invoice.webProjectNote} ${w.devOnlyNote}`, {
+    size: 16,
+    color: COLORS.zinc600,
+  });
+
+  return [heading, table, note];
+}
+
+/** Small reference line ("Quote ref: Q-XXXXXXX") for cross-referencing at booking time. */
+export function makeRefLine(isAr: boolean, ref: string): Paragraph {
+  return textP(isAr, `${isAr ? 'مرجع العرض' : 'Quote ref'}: ${ref}`, {
+    size: 18,
+    color: COLORS.zinc600,
+  });
+}
+
+/* ----------------------------------------------------------------- */
 /* Totals block — subtotal / management 20% / total                   */
 /* ----------------------------------------------------------------- */
 
@@ -698,7 +746,8 @@ export function makeTotalsBlock(
   isAr: boolean,
   c: ReturnType<typeof calc>,
   state?: QuoteState,
-  fx?: { rate: number; symbol: string },
+  fx?: WebFx,
+  cfg?: RegionConfig,
 ): Table {
   const lbl = isAr
     ? {
@@ -791,15 +840,19 @@ export function makeTotalsBlock(
     }),
   ];
 
-  // One-off web project — priced in USD outside the monthly retainer, but it
-  // must still appear with the totals so the printed quote carries the cost.
+  // One-off web project — priced outside the monthly retainer, but it must
+  // still appear with the totals so the printed quote carries the cost.
   const tier = state?.web ? getWebTier(state.webTier) : null;
-  if (tier && fx) {
+  if (tier && fx && cfg) {
     const m = MESSAGES[isAr ? 'ar' : 'en'];
+    const regional = `${tierRegionAmount(tier, cfg.upliftUsd[tier.id], fx.rate, lbl.from)} ${fx.symbol}`;
+    const usdBand = fx.showUsd
+      ? `  (≈ ${tierRegionUsdLabel(tier, cfg.upliftUsd[tier.id], lbl.from)})`
+      : '';
     rows.push(
       row(
         `${m.invoice.webProjectTitle} — ${m.services.web.tiers[tier.id].name}`,
-        `${tierUsdLabel(tier, lbl.from)}  (≈ ${tierFxLabel(tier, fx.rate, lbl.from, fx.symbol)})`,
+        `${regional}${usdBand}`,
         { fill: 'F4F4F5', size: 20 },
       ),
     );

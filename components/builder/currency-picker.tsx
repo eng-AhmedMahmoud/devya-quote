@@ -6,15 +6,20 @@ interface Props {
   value: CurrencyCode;
   onChange: (code: CurrencyCode) => void;
   label: string;
+  /** Region's allowed currencies, in display order */
+  currencies: CurrencyCode[];
 }
 
 /** Global display-currency selector — drives the whole quote, not just web tiers. */
-export function CurrencyPicker({ value, onChange, label }: Props) {
+export function CurrencyPicker({ value, onChange, label, currencies }: Props) {
+  const list = currencies
+    .map((code) => CURRENCIES.find((c) => c.code === code))
+    .filter((c): c is (typeof CURRENCIES)[number] => Boolean(c));
   return (
     <div className="flex items-center gap-2 flex-wrap mb-4">
       <span className="text-[13px] text-zinc-500">{label}</span>
       <div role="radiogroup" aria-label={label} className="flex gap-1.5 flex-wrap">
-        {CURRENCIES.map((c) => {
+        {list.map((c) => {
           const active = c.code === value;
           return (
             <button

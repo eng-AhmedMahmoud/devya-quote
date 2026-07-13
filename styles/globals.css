@@ -109,6 +109,22 @@ input, textarea, select, button { font-size: 17px; }
 .doc-page + .doc-page { margin-top: 0; }
 .doc-page.rtl { direction: rtl; text-align: right; font-family: 'Amiri', var(--font-amiri), 'Times New Roman', serif; font-size: 13pt; }
 
+/* Mobile: the A4 page is fixed at 794px — zoom it down to fit the viewport.
+   `zoom` scales layout too (unlike transform), and print stays untouched. */
+@media screen and (max-width: 850px) {
+  .doc-stage { padding: 12px 0; border-radius: 0; }
+  .doc-page { zoom: 0.72; }
+}
+@media screen and (max-width: 620px) {
+  .doc-page { zoom: 0.55; }
+}
+@media screen and (max-width: 460px) {
+  .doc-page { zoom: 0.46; }
+}
+@media screen and (max-width: 380px) {
+  .doc-page { zoom: 0.42; }
+}
+
 /* Inner padding via wrapper to keep header/footer flush */
 .doc-page .doc-body { padding: 56px 64px 110px; }
 
