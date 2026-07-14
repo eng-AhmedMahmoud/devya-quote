@@ -47,6 +47,15 @@ export function FooterBlock({ lang }: Props) {
               {t.links.portfolio}
             </a>
             <a
+              href="https://xray.devya.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition"
+              dir="ltr"
+            >
+              {t.links.xray}
+            </a>
+            <a
               href="https://www.instagram.com/devyasoftware/"
               target="_blank"
               rel="noopener noreferrer"

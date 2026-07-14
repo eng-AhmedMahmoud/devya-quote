@@ -305,6 +305,33 @@ export function QuoteBuilder({
         </section>
 
         <PaymentTerms lang={lang} />
+
+        <section className="pb-12 sm:pb-16">
+          <div className="container mx-auto px-5 sm:px-8 max-w-[1180px]">
+            <div className="surface flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+              <div className="min-w-0">
+                <span className="block text-[13px] font-medium text-zinc-500 tracking-wide" dir="ltr">
+                  {dict.xray.eyebrow}
+                </span>
+                <b className="mt-1 block font-sora font-semibold text-[19px] text-white leading-snug">
+                  {dict.xray.title}
+                </b>
+                <p className="mt-1.5 text-[15px] text-zinc-400 leading-relaxed max-w-[64ch]">
+                  {dict.xray.desc}
+                </p>
+              </div>
+              <a
+                href="https://xray.devya.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex flex-none items-center justify-center gap-1.5 rounded-full border border-white/15 px-4 py-2.5 text-[14px] font-semibold text-white transition hover:bg-white/[0.06]"
+              >
+                {dict.xray.cta}
+                <ArrowRight className={`h-3.5 w-3.5 ${isRtl ? 'rotate-180' : ''}`} />
+              </a>
+            </div>
+          </div>
+        </section>
       </main>
 
       <FooterBlock lang={lang} />

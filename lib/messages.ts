@@ -98,7 +98,14 @@ export type MessagesShape = {
       portfolio: string;
       contracts: string;
       quote: string;
+      xray: string;
     };
+  };
+  xray: {
+    eyebrow: string;
+    title: string;
+    desc: string;
+    cta: string;
   };
 };
 
@@ -288,7 +295,14 @@ const ar: MessagesShape = {
       portfolio: 'أعمالنا',
       contracts: 'العقود',
       quote: 'عرض السعر',
+      xray: 'Devya X-Ray',
     },
+  },
+  xray: {
+    eyebrow: 'Devya X-Ray',
+    title: 'تحتاج مراجعة هندسية بدلًا من ذلك؟',
+    desc: 'لقطة مجانية ذاتية الخدمة خلال دقائق، أو مراجعة كاملة مدتها أسبوعان مُتحقَّق منها على مستوى الشيفرة — يُجرون معك مقابلة، ونقرأ نحن شيفرتك الفعلية.',
+    cta: 'استكشف Devya X-Ray',
   },
 };
 
@@ -478,7 +492,14 @@ const en: MessagesShape = {
       portfolio: 'Our Work',
       contracts: 'Contracts',
       quote: 'Quote',
+      xray: 'Devya X-Ray',
     },
+  },
+  xray: {
+    eyebrow: 'Devya X-Ray',
+    title: 'Need an engineering review instead?',
+    desc: 'A free self-serve snapshot in minutes, or a full 2-week code-verified review — they interview you, we read your actual code.',
+    cta: 'Explore Devya X-Ray',
   },
 };
 
