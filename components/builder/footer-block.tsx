@@ -71,6 +71,22 @@ export function FooterBlock({ lang }: Props) {
             >
               X
             </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=100083454586673"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition"
+            >
+              Facebook
+            </a>
+            <a
+              href="https://www.linkedin.com/company/devya-solutions/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition"
+            >
+              LinkedIn
+            </a>
           </nav>
         </div>
         <div className="mt-5 pt-4 border-t border-white/5 text-[13px] text-zinc-500 font-mono flex flex-wrap gap-3 justify-between">
