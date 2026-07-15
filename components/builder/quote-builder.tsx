@@ -26,6 +26,7 @@ import { InvoicePanel } from './invoice-panel';
 import { PaymentTerms } from './payment-terms';
 import { IntroSection } from './intro-section';
 import { FooterBlock } from './footer-block';
+import { RewardsPromo } from './rewards-promo';
 import { WebTierPicker } from './web-tier-picker';
 import { CurrencyPicker } from './currency-picker';
 
@@ -334,6 +335,7 @@ export function QuoteBuilder({
         </section>
       </main>
 
+      <RewardsPromo lang={lang} />
       <FooterBlock lang={lang} />
     </div>
   );
