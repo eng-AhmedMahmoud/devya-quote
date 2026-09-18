@@ -25,7 +25,7 @@ export function Sidebar() {
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-white/5 bg-black/60 backdrop-blur-md no-print">
-      <div className="px-5 py-5 flex items-center gap-2 border-b border-white/5">
+      <div className="px-5 py-5 flex flex-col items-start gap-2 border-b border-white/5">
         <DevyaLogo size={22} />
         <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] uppercase tracking-wider text-zinc-400">
           Quotes
