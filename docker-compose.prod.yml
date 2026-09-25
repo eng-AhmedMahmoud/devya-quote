@@ -1,0 +1,18 @@
+services:
+  quote-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: devya-quote-app:latest
+    container_name: devya-quote-app
+    restart: unless-stopped
+    ports:
+      # Loopback-only — nginx reverse-proxies to localhost:3006. Without the
+      # 127.0.0.1 prefix Docker publishes on 0.0.0.0, which ufw does not filter.
+      - "127.0.0.1:3006:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
