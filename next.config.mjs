@@ -1,6 +1,12 @@
+import { securityHeaders } from './security-headers.mjs';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: '/:path*', headers: securityHeaders }];
+  },
   // Moved onto the brand domain (quote.devya.dev). The old
   // quote.devya-solutions.com host stays attached but 301s every path to the
   // new domain so link equity + bookmarks consolidate on one canonical host.
