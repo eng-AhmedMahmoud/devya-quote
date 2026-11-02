@@ -6,7 +6,7 @@ export const DEVYA_PARTY = {
   addressEn: 'Cairo, Egypt',
   addressAr: 'القاهرة، جمهورية مصر العربية',
   email: 'contact@devya.dev',
-  phone: '+201055930032',
+  phone: '+201024672684',
   website: 'www.devya.dev',
   portfolio: 'https://portfolio.devya.dev/',
   portfolioLabel: 'portfolio.devya.dev',
